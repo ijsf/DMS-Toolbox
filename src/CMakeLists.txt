@@ -44,12 +44,13 @@ add_subdirectory(wersi)
 # -----------------------------------------------------------------------------
 # - Non-GUI executables                                                       -
 # -----------------------------------------------------------------------------
-#add_executable(dmsdump dmsdump.cc
-#    $<TARGET_OBJECTS:wersi>
-#)
-#install(TARGETS dmsdump
-#    RUNTIME DESTINATION bin
-#)
+add_executable(dmsdump dmsdump.cc
+    $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:wersi>
+)
+install(TARGETS dmsdump
+    RUNTIME DESTINATION bin
+)
 
 # -----------------------------------------------------------------------------
 # - GUI libraries/executables                                                 -

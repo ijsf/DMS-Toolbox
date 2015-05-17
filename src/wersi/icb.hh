@@ -57,7 +57,7 @@ class Icb {
           Create new ICB object from buffer.
 
           Creates a new ICB object with the given block number and associates the given buffer with it. During
-          creation, the data from the buffer is parsed and copied to the object members. If an explicit Update()
+          creation, the data from the buffer is parsed and copied to the object members. If an explicit update()
           is called, the buffer is written back with the updated ICB object data, for all other functions, it is
           left untouched.
 
@@ -98,14 +98,69 @@ class Icb {
 
           Parses the raw ICB data buffer and updates object members.
          */
-        void Dissect();
+        void dissect();
 
         /**
           Update ICB raw data buffer.
 
           Writes back changes in the ICB object to the associated raw ICB data buffer.
          */
-        void Update();
+        void update();
+
+        /**
+          Get next ICB.
+
+          Returns the next ICB value for layered voices or 0 if no next ICB is available.
+
+          @return                   Next ICB number
+         */
+        uint8_t getNextIcb() const {
+            return m_nextIcb;
+        }
+
+        /**
+          Get VCF block.
+
+          Returns the VCF block number.
+
+          @return                   VCF block number
+         */
+        uint8_t getVcf() const {
+            return m_vcfBlock;
+        }
+
+        /**
+          Get AMPL block.
+
+          Returns the AMPL block number.
+
+          @return                   AMPL block number
+         */
+        uint8_t getAmpl() const {
+            return m_amplBlock;
+        }
+
+        /**
+          Get FREQ block.
+
+          Returns the FREQ block number.
+
+          @return                   FREQ block number
+         */
+        uint8_t getFreq() const {
+            return m_freqBlock;
+        }
+
+        /**
+          Get WAVE block.
+
+          Returns the WAVE block number.
+
+          @return                   WAVE block number
+         */
+        uint8_t getWave() const {
+            return m_waveBlock;
+        }
 
     private:
         /// WersiVoice mode

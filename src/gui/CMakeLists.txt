@@ -14,11 +14,13 @@ set(HEADERS
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 add_executable(dmstb WIN32 ${SOURCES}
-#    $<TARGET_OBJECTS:wersi>
+    $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:wersi>
 )
 else()
 add_executable(dmstb ${SOURCES}
-#    $<TARGET_OBJECTS:wersi>
+    $<TARGET_OBJECTS:core>
+    $<TARGET_OBJECTS:wersi>
 )
 endif()
 # TODO need this due to generated code not being so ultra-clean

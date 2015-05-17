@@ -55,7 +55,7 @@ class Vcf {
           Create new VCF object from buffer.
 
           Creates a new VCF object with the given block number and associates the given buffer with it. During
-          creation, the data from the buffer is parsed and copied to the object members. If an explicit Update()
+          creation, the data from the buffer is parsed and copied to the object members. If an explicit update()
           is called, the buffer is written back with the updated VCF object data, for all other functions, it is
           left untouched.
 
@@ -96,14 +96,14 @@ class Vcf {
 
           Parses the raw VCF data buffer and updates object members.
          */
-        void Dissect();
+        void dissect();
 
         /**
           Update VCF raw data buffer.
 
           Writes back changes in the VCF object to the associated raw VCF data buffer.
          */
-        void Update();
+        void update();
 
     private:
         // Noise type

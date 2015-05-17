@@ -64,7 +64,7 @@ Vcf::Vcf(uint8_t blockNum, void* buffer)
     , m_t2Intensity(0)
     , m_t2Offset(0)
 {
-    Dissect();
+    dissect();
 }
 
 // Create VCF object by copying
@@ -130,7 +130,7 @@ Vcf& Vcf::operator=(const Vcf& source)
 }
 
 // Dissect VCF raw data
-void Vcf::Dissect()
+void Vcf::dissect()
 {
     m_left          = (m_buffer[0] & 0x01) != 0;
     m_right         = (m_buffer[0] & 0x02) != 0;
@@ -156,7 +156,7 @@ void Vcf::Dissect()
 }
 
 // Put together and update VCF raw data
-void Vcf::Update()
+void Vcf::update()
 {
 }
 

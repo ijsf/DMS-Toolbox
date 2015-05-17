@@ -65,7 +65,7 @@ Icb::Icb(uint8_t blockNum, void* buffer)
     , m_wvFbDeep(false)
     , m_name()
 {
-    Dissect();
+    dissect();
 }
 
 // Create ICB object by copying
@@ -129,7 +129,7 @@ Icb& Icb::operator=(const Icb& source)
 }
 
 // Disssect ICB raw data
-void Icb::Dissect()
+void Icb::dissect()
 {
     m_nextIcb   = m_buffer[0];
     m_vcfBlock  = m_buffer[1];
@@ -155,7 +155,7 @@ void Icb::Dissect()
 }
 
 // Put together and update ICB raw data
-void Icb::Update()
+void Icb::update()
 {
 }
 

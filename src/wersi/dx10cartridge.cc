@@ -35,52 +35,40 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
+#include <wersi/dx10cartridge.hh>
+#include <wersi/icb.hh>
+#include <wersi/vcf.hh>
 #include <wersi/envelope.hh>
+#include <wersi/wave.hh>
 
 namespace DMSToolbox {
 namespace Wersi {
 
-// Create new envelope object
-Envelope::Envelope(uint8_t blockNum, void* buffer, size_t size)
-    : m_blockNum(blockNum)
-    , m_buffer(static_cast<uint8_t*>(buffer))
+// Create new DX10/DX5 cartridge object
+Dx10Cartridge::Dx10Cartridge(void* buffer, size_t size, bool /*initialize*/)
+    : m_buffer(static_cast<uint8_t*>(buffer))
     , m_size(size)
+    , m_icb()
+    , m_vcf()
+    , m_ampl()
+    , m_freq()
+    , m_wave()
 {
     dissect();
 }
 
-// Create new envelope object by copying
-Envelope::Envelope(const Envelope& source)
-    : m_blockNum(0)
-    , m_buffer(nullptr)
-    , m_size(0)
-{
-    *this = source;
-}
-
-// Destroy envelope object
-Envelope::~Envelope()
+// Destroy DX10/DX5 cartridge object
+Dx10Cartridge::~Dx10Cartridge()
 {
 }
 
-// Copy envelope object members
-Envelope& Envelope::operator=(const Envelope& source)
-{
-    if (this != &source) {
-        m_blockNum = source.m_blockNum;
-        m_buffer = source.m_buffer;
-        m_size = source.m_size;
-    }
-    return *this;
-}
-
-// Dissect envelope raw data
-void Envelope::dissect()
+// Dissect raw DX10/DX5 cartridge data
+void Dx10Cartridge::dissect()
 {
 }
 
-// Put together and update envelope raw data
-void Envelope::update()
+// Put together and update DX10/DX5 cartridge raw data
+void Dx10Cartridge::update()
 {
 }
 

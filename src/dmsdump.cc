@@ -35,54 +35,51 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
-#include <wersi/envelope.hh>
+#include <wersi/mk1cartridge.hh>
+#include <exceptions.hh>
+#include <iostream>
+#include <fstream>
 
-namespace DMSToolbox {
-namespace Wersi {
+using namespace std;
+using namespace DMSToolbox;
+using namespace DMSToolbox::Wersi;
 
-// Create new envelope object
-Envelope::Envelope(uint8_t blockNum, void* buffer, size_t size)
-    : m_blockNum(blockNum)
-    , m_buffer(static_cast<uint8_t*>(buffer))
-    , m_size(size)
+int main(int argc, char** argv)
 {
-    dissect();
-}
-
-// Create new envelope object by copying
-Envelope::Envelope(const Envelope& source)
-    : m_blockNum(0)
-    , m_buffer(nullptr)
-    , m_size(0)
-{
-    *this = source;
-}
-
-// Destroy envelope object
-Envelope::~Envelope()
-{
-}
-
-// Copy envelope object members
-Envelope& Envelope::operator=(const Envelope& source)
-{
-    if (this != &source) {
-        m_blockNum = source.m_blockNum;
-        m_buffer = source.m_buffer;
-        m_size = source.m_size;
+    // Check arguments
+    if (argc != 2) {
+        cerr << "Usage: " << argv[0] << " <filename>" << endl;
+        return 1;
     }
-    return *this;
-}
 
-// Dissect envelope raw data
-void Envelope::dissect()
-{
-}
+    // Open and check input file
+    ifstream f(argv[1], ios::binary);
+    if (!f) {
+        cerr << "Cannot open input file" << endl;
+        return 2;
+    }
+    f.seekg(0, ios::end);
+    size_t size = f.tellg();
+    f.seekg(0, ios::beg);
+    if (size > 1024 * 1024) {
+        cerr << "Input file too large" << endl;
+        return 3;
+    }
 
-// Put together and update envelope raw data
-void Envelope::update()
-{
-}
+    char* buf = new char[size];
+    f.read(buf, size);
 
-} // namespace Wersi
-} // namespace DMSToolbox
+    try {
+        Mk1Cartridge c(buf);
+    }
+    catch (DataFormatException& e) {
+        cerr << "Data format exception: " << e.what() << endl;
+    }
+    catch (Exception& e) {
+        cerr << "Other exception: " << e.what() << endl;
+    }
+
+    delete[] buf;
+
+    return 0;
+}

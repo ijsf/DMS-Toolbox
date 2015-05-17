@@ -51,7 +51,7 @@ namespace Wersi {
   The first two bytes of an envelope are always pointers for the release and the attack phase, the rest is envelope
   program data. This class provides an assembler and disassembler for this envelope data, it also allows inserting
   and deleting instructions in the envelope program with updating all the necessary pointers. So the envelope program
-  can be edited and is assembled back into the raw data structure on an Update() call.
+  can be edited and is assembled back into the raw data structure on an update() call.
  */
 class Envelope {
     public:
@@ -59,7 +59,7 @@ class Envelope {
           Create new envelope object from buffer.
 
           Creates a new VCF object with the given block number and associates the given buffer with it. During
-          creation, the data from the buffer is parsed and copied to the object members. If an explicit Update()
+          creation, the data from the buffer is parsed and copied to the object members. If an explicit update()
           is called, the buffer is written back with the updated envelope object data, for all other functions, it is
           left untouched.
 
@@ -101,14 +101,14 @@ class Envelope {
 
           Parses the raw envelope data buffer and updates object members.
          */
-        void Dissect();
+        void dissect();
 
         /**
           Update envelope raw data buffer.
 
           Writes back changes in the envelope object to the associated raw envelope data buffer.
          */
-        void Update();
+        void update();
 
     private:
         uint8_t         m_blockNum;         ///< Block number

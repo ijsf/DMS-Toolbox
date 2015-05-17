@@ -57,7 +57,7 @@ class Wave {
           Create new wave object from buffer.
 
           Creates a new wave object with the given block number and associates the given buffer with it. During
-          creation, the data from the buffer is parsed and copied to the object members. If an explicit Update()
+          creation, the data from the buffer is parsed and copied to the object members. If an explicit update()
           is called, the buffer is written back with the updated wave object data, for all other functions, it is
           left untouched.
 
@@ -99,14 +99,14 @@ class Wave {
 
           Parses the raw wave data buffer and updates object members.
          */
-        void Dissect();
+        void dissect();
 
         /**
           Update wave raw data buffer.
 
           Writes back changes in the wave object to the associated raw wave data buffer.
          */
-        void Update();
+        void update();
 
     private:
         uint8_t         m_blockNum;         ///< Block number

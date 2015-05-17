@@ -58,6 +58,7 @@ Wave::Wave(uint8_t blockNum, void* buffer, size_t size)
     , m_sopranoWave()
     , m_fixFormData()
 {
+    dissect();
 }
 
 // Create wave object by copying
@@ -96,13 +97,13 @@ Wave& Wave::operator=(const Wave& source)
         memcpy(m_tenorWave,   source.m_tenorWave,   sizeof(m_tenorWave));
         memcpy(m_altoWave,    source.m_altoWave,    sizeof(m_altoWave));
         memcpy(m_sopranoWave, source.m_sopranoWave, sizeof(m_sopranoWave));
-        memcpy(m_fixFormData, source.m_fixFormData, sizeof(m_bassWave));
+        memcpy(m_fixFormData, source.m_fixFormData, sizeof(m_fixFormData));
     }
     return *this;
 }
 
 // Dissect raw wave data
-void Wave::Dissect()
+void Wave::dissect()
 {
     m_level         = m_buffer[0] & 0x7f;
     m_fixedFormants = (m_buffer[0] & 0x80) != 0;
@@ -143,8 +144,8 @@ void Wave::Dissect()
     }
 }
 
-// Put together and udate wave raw data
-void Wave::Update()
+// Put together and update wave raw data
+void Wave::update()
 {
 }
 
