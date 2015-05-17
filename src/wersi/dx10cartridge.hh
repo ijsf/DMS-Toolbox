@@ -37,17 +37,10 @@
 
 #pragma once
 
-#include <common.hh>
-#include <map>
+#include <wersi/instrumentstore.hh>
 
 namespace DMSToolbox {
 namespace Wersi {
-
-// Forward declarations
-class Icb;
-class Vcf;
-class Envelope;
-class Wave;
 
 /**
   @ingroup wersi_group
@@ -57,7 +50,7 @@ class Wave;
   There are two basic image formats for cartridges, the MK1 and the DX10/DX5 format. This class handles the DX10/DX5
   format, storing 8 presets and 10 instruments and optionally 24 rhythms and 8 sequences
  */
-class Dx10Cartridge {
+class Dx10Cartridge : public InstrumentStore {
     public:
         /**
           Create new DX10/DX5 cartridge object from buffer.
@@ -80,31 +73,17 @@ class Dx10Cartridge {
 
           Destroys the DX10/DX5 cartridge object.
          */
-        ~Dx10Cartridge();
+        virtual ~Dx10Cartridge();
 
-        /**
-          Dissect DX10/DX5 cartridge raw data buffer.
+        /// Implements InstrumentStore::dissect()
+        virtual void dissect();
 
-          Parses the raw DX10/DX5 cartridge data buffer and updates object members.
-         */
-        void dissect();
-
-        /**
-          Update DX10/DX5 cartridge raw data buffer.
-
-          Writes back changes in the DX10/DX5 cartridge object and children to the associated raw data buffer.
-         */
-        void update();
+        /// Implements InstrumentStore::update()
+        virtual void update();
 
     private:
         uint8_t*                    m_buffer;           ///< Associated raw buffer
         size_t                      m_size;
-
-        std::map<uint8_t, Icb>      m_icb;              ///< ICB data
-        std::map<uint8_t, Vcf>      m_vcf;              ///< VCF data
-        std::map<uint8_t, Envelope> m_ampl;             ///< AMPL data
-        std::map<uint8_t, Envelope> m_freq;             ///< FREQ data
-        std::map<uint8_t, Wave>     m_wave;             ///< WAVE data
 
         Dx10Cartridge(const Dx10Cartridge&);            ///< Inhibit copying objects
         Dx10Cartridge& operator=(const Dx10Cartridge&); ///< Inhibit copying objects

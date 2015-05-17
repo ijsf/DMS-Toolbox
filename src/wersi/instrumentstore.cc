@@ -35,57 +35,43 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
 #include <wersi/instrumentstore.hh>
+#include <wersi/icb.hh>
+#include <wersi/vcf.hh>
+#include <wersi/envelope.hh>
+#include <wersi/wave.hh>
+
+using namespace std;
 
 namespace DMSToolbox {
 namespace Wersi {
 
-/**
-  @ingroup wersi_group
+// Create new instrument store
+InstrumentStore::InstrumentStore()
+    : m_icb()
+    , m_vcf()
+    , m_ampl()
+    , m_freq()
+    , m_wave()
+{
+}
 
-  Wersi DMS-System MK1 cartridge handler class.
+// Destroy instrument store
+InstrumentStore::~InstrumentStore()
+{
+}
 
-  There are two basic image formats for cartridges, the MK1 and the DX10/DX5 format. This class handles the MK1 format,
-  storing 20 instruments.
- */
-class Mk1Cartridge : public InstrumentStore {
-    public:
-        /**
-          Create new MK1 cartridge object from buffer.
+// Return begin iterator to ICB map
+std::map<uint8_t, Icb>::iterator InstrumentStore::begin()
+{
+    return m_icb.begin();
+}
 
-          Creates a new MK1 cartridge object and associates the given buffer with it. During creation, the data from
-          the buffer is parsed and all contained objects are created for simple data access. If an explicit update()
-          is called, the update() method of all contained objects is called to update their part of the buffer, then
-          the cartridge raw buffer is updated with this new information.
-
-          @todo implement double buffering for this
-
-          @param[in]    buffer      Raw data buffer
-          @param[in]    initialize  If true, a blank MK1 cartridge is created
-         */
-        Mk1Cartridge(void* buffer, bool initialize = false);
-
-        /**
-          Destroy MK1 cartridge object.
-
-          Destroys the MK1 cartridge object.
-         */
-        virtual ~Mk1Cartridge();
-
-        /// Implements InstrumentStore::dissect()
-        virtual void dissect();
-
-        /// Implements InstrumentStore::update()
-        virtual void update();
-
-    private:
-        uint8_t*                    m_buffer;           ///< Associated raw buffer
-
-        Mk1Cartridge(const Mk1Cartridge&);              ///< Inhibit copying objects
-        Mk1Cartridge& operator=(const Mk1Cartridge&);   ///< Inhibit copying objects
-};
+// Return end iterator to ICB map
+std::map<uint8_t, Icb>::iterator InstrumentStore::end()
+{
+    return m_icb.end();
+}
 
 } // namespace Wersi
 } // namespace DMSToolbox

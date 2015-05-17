@@ -6,6 +6,7 @@ set(SOURCES
 	vcf.cc
 	envelope.cc
 	wave.cc
+	instrumentstore.cc
 	mk1cartridge.cc
 	dx10cartridge.cc
 )
@@ -15,6 +16,7 @@ set(HEADERS
 	vcf.hh
 	envelope.hh
 	wave.hh
+	instrumentstore.hh
 	mk1cartridge.hh
 	dx10cartridge.hh
 )

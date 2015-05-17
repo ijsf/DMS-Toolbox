@@ -36,6 +36,8 @@
  */
 
 #include <wersi/mk1cartridge.hh>
+#include <wersi/dx10cartridge.hh>
+#include <wersi/icb.hh>
 #include <exceptions.hh>
 #include <iostream>
 #include <fstream>
@@ -69,14 +71,32 @@ int main(int argc, char** argv)
     char* buf = new char[size];
     f.read(buf, size);
 
+    InstrumentStore* is = nullptr;
     try {
-        Mk1Cartridge c(buf);
+        is = new Mk1Cartridge(buf);
+        cout << "Detected MK1 cartridge" << endl;
     }
     catch (DataFormatException& e) {
-        cerr << "Data format exception: " << e.what() << endl;
+        string mk1Error = e.what();
+        try {
+            is = new Dx10Cartridge(buf, size);
+            cout << "Detected DX10/DX5 cartridge" << endl;
+        }
+        catch (DataFormatException& e) {
+            cerr << "Cartridge is neither MK1 nor DX10/DX5 format" << endl;
+            cerr << "MK1 error: " << mk1Error << endl;
+            cerr << "DX10/DX5 error: " << e.what() << endl;
+        }
     }
     catch (Exception& e) {
         cerr << "Other exception: " << e.what() << endl;
+    }
+    if (is != nullptr) {
+        for (auto& i : *is) {
+            cout << uint16_t(i.first) << " " << uint16_t(i.second.getNextIcb()) << " " << i.second.getName() << endl;
+        }
+
+        delete is;
     }
 
     delete[] buf;

@@ -162,6 +162,17 @@ class Icb {
             return m_waveBlock;
         }
 
+        /**
+          Get ICB name.
+
+          Returns the ICB name.
+
+          @return                   ICB name
+         */
+        std::string getName() const {
+            return m_name;
+        }
+
     private:
         /// WersiVoice mode
         enum class WvMode {
