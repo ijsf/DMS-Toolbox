@@ -1,0 +1,12 @@
+/* vim:set et ts=4 sw=4: */
+/**
+@mainpage Introduction
+This document describes <b>DMS-Toolbox</b>, an editor, librarian and converter for the Wersi DMS-system.
+
+@section copyright_section Copyright
+This project is Copyright (C) 2015 by Michael Kukat. You may distribute it and/or modify it under the terms of the GNU public license (http://www.gnu.org/licenses/gpl.html) version 3 or newer.
+All trademarks within this document belong to their legitimate owners.
+
+@section basinf_section Basic information
+This file currently is just a placeholder for the real documentation.
+*/
