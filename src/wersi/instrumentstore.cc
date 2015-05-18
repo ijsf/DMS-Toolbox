@@ -73,5 +73,65 @@ std::map<uint8_t, Icb>::iterator InstrumentStore::end()
     return m_icb.end();
 }
 
+// Return ICB for given block number
+Icb* InstrumentStore::getIcb(uint8_t block)
+{
+    auto ret = m_icb.find(block);
+    if (ret == m_icb.end()) {
+        return nullptr;
+    }
+    else {
+        return &(ret->second);
+    }
+}
+
+// Return VCF for given block number
+Vcf* InstrumentStore::getVcf(uint8_t block)
+{
+    auto ret = m_vcf.find(block);
+    if (ret == m_vcf.end()) {
+        return nullptr;
+    }
+    else {
+        return &(ret->second);
+    }
+}
+
+// Return AMPL for given block number
+Envelope* InstrumentStore::getAmpl(uint8_t block)
+{
+    auto ret = m_ampl.find(block);
+    if (ret == m_ampl.end()) {
+        return nullptr;
+    }
+    else {
+        return &(ret->second);
+    }
+}
+
+// Return FREQ for given block number
+Envelope* InstrumentStore::getFreq(uint8_t block)
+{
+    auto ret = m_freq.find(block);
+    if (ret == m_freq.end()) {
+        return nullptr;
+    }
+    else {
+        return &(ret->second);
+    }
+}
+
+// Return WAVE for given block number
+Wave* InstrumentStore::getWave(uint8_t block)
+{
+    auto ret = m_wave.find(block);
+    if (ret == m_wave.end()) {
+        return nullptr;
+    }
+    else {
+        return &(ret->second);
+    }
+}
+
 } // namespace Wersi
 } // namespace DMSToolbox

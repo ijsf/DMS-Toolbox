@@ -80,6 +80,11 @@ class Mk1Cartridge : public InstrumentStore {
         /// Implements InstrumentStore::update()
         virtual void update();
 
+        /// Implements InstrumentStore::getNumIcbs()
+        virtual size_t getNumIcbs() const {
+            return 20;
+        }
+
     private:
         uint8_t*                    m_buffer;           ///< Associated raw buffer
 

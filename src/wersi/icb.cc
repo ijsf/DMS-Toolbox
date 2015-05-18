@@ -37,8 +37,6 @@
 
 #include <wersi/icb.hh>
 
-using namespace std;
-
 namespace DMSToolbox {
 namespace Wersi {
 
@@ -64,6 +62,7 @@ Icb::Icb(uint8_t blockNum, void* buffer)
     , m_wvFbFlat(false)
     , m_wvFbDeep(false)
     , m_name()
+    , m_unknownBits()
 {
     dissect();
 }
@@ -90,6 +89,7 @@ Icb::Icb(const Icb& source)
     , m_wvFbFlat(false)
     , m_wvFbDeep(false)
     , m_name()
+    , m_unknownBits()
 {
     *this = source;
 }
@@ -124,6 +124,8 @@ Icb& Icb::operator=(const Icb& source)
         m_wvFbFlat  = source.m_wvFbFlat;
         m_wvFbDeep  = source.m_wvFbDeep;
         m_name      = source.m_name;
+
+        m_unknownBits = source.m_unknownBits;
     }
     return *this;
 }
@@ -151,12 +153,40 @@ void Icb::dissect()
     // Unknown bit 5
     m_wvFbFlat  = (m_buffer[9] & 0x40) != 0;
     m_wvFbDeep  = (m_buffer[9] & 0x80) != 0;
-    m_name      = string(reinterpret_cast<char*>(&(m_buffer[10])), 6);
+    m_name      = std::string(reinterpret_cast<char*>(&(m_buffer[10])), 6);
+
+    // Unknown bits
+    m_unknownBits = m_buffer[5] | ((m_buffer[6] & 0xe0) << 3) | ((m_buffer[9] & 0x20) << 7);
 }
 
 // Put together and update ICB raw data
 void Icb::update()
 {
+}
+
+// Return WersiVoice mode name
+std::string Icb::getWvModeName(WvMode mode)
+{
+    switch (mode) {
+        case WvMode::RotorSlow:
+            return std::string("Rotor slow");
+            break;
+        case WvMode::RotorFast:
+            return std::string("Rotor fast");
+            break;
+        case WvMode::Flanger:
+            return std::string("Flanger");
+            break;
+        case WvMode::Strings:
+            return std::string("Strings");
+            break;
+        case WvMode::Chorus:
+            return std::string("Chorus");
+            break;
+        default:
+            return std::string();
+            break;
+    }
 }
 
 } // namespace Wersi

@@ -63,6 +63,7 @@ Vcf::Vcf(uint8_t blockNum, void* buffer)
     , m_t1Offset(0)
     , m_t2Intensity(0)
     , m_t2Offset(0)
+    , m_unknownBits(0)
 {
     dissect();
 }
@@ -90,6 +91,7 @@ Vcf::Vcf(const Vcf& source)
     , m_t1Offset(0)
     , m_t2Intensity(0)
     , m_t2Offset(0)
+    , m_unknownBits(0)
 {
     *this = source;
 }
@@ -125,6 +127,8 @@ Vcf& Vcf::operator=(const Vcf& source)
         m_t1Offset      = source.m_t1Offset;
         m_t2Intensity   = source.m_t2Intensity;
         m_t2Offset      = source.m_t2Offset;
+
+        m_unknownBits   = source.m_unknownBits;
     }
     return *this;
 }
@@ -153,11 +157,54 @@ void Vcf::dissect()
     m_t1Offset      = int8_t(m_buffer[7]);
     m_t2Intensity   = int8_t(m_buffer[8]);
     m_t2Offset      = int8_t(m_buffer[9]);
+
+    m_unknownBits   = (m_buffer[3] & 0x03) | (m_buffer[0] & 0x80);
 }
 
 // Put together and update VCF raw data
 void Vcf::update()
 {
+}
+
+// Return noise type name
+std::string Vcf::getNoiseTypeName(NoiseType type)
+{
+    switch (type) {
+        case NoiseType::Wind:
+            return std::string("Wind");
+            break;
+        case NoiseType::Patch:
+            return std::string("Patch");
+            break;
+        case NoiseType::Flute:
+            return std::string("Flute");
+            break;
+        default:
+            return std::string();
+            break;
+    }
+}
+
+// Return envelope mode name
+std::string Vcf::getEnvelopeModeName(EnvelopeMode mode)
+{
+    switch (mode) {
+        case EnvelopeMode::T1:
+            return std::string("T1 only");
+            break;
+        case EnvelopeMode::T1T2:
+            return std::string("T1->T2");
+            break;
+        case EnvelopeMode::T1RT2:
+            return std::string("T1->Release->T2");
+            break;
+        case EnvelopeMode::Rotor:
+            return std::string("Rotor");
+            break;
+        default:
+            return std::string();
+            break;
+    }
 }
 
 } // namespace Wersi

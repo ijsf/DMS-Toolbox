@@ -89,11 +89,20 @@ class InstrumentStore {
         virtual void update() = 0;
 
         /**
+          Get number of primary ICBs
+
+          Returns the instrument store specific number of primary ICBs
+
+          @return                   Number of primary ICBs
+         */
+        virtual size_t getNumIcbs() const = 0;
+
+        /**
           Get iterator to beginning of ICB map.
 
           Returns an iterator to the beginning of the ICB map.
 
-          @return           Iterator to the beginning of the ICB map
+          @return                   Iterator to the beginning of the ICB map
          */
         std::map<uint8_t, Icb>::iterator begin();
 
@@ -102,9 +111,64 @@ class InstrumentStore {
 
           Returns an iterator to the end of the ICB map.
 
-          @return           Iterator to the end of the ICB map
+          @return                   Iterator to the end of the ICB map
          */
         std::map<uint8_t, Icb>::iterator end();
+
+        /**
+          Get ICB by block number.
+
+          Returns the ICB for the given block number or nullptr if not found.
+
+          @param[in]    block       Block number to look up ICB for
+
+          @return                   Pointer to ICB or nullptr if not found
+         */
+        Icb* getIcb(uint8_t block);
+
+        /**
+          Get VCF by block number.
+
+          Returns the VCF for the given block number or nullptr if not found.
+
+          @param[in]    block       Block number to look up VCF for
+
+          @return                   Pointer to VCF or nullptr if not found
+         */
+        Vcf* getVcf(uint8_t block);
+
+        /**
+          Get AMPL by block number.
+
+          Returns the AMPL for the given block number or nullptr if not found.
+
+          @param[in]    block       Block number to look up AMPL for
+
+          @return                   Pointer to AMPL or nullptr if not found
+         */
+        Envelope* getAmpl(uint8_t block);
+
+        /**
+          Get FREQ by block number.
+
+          Returns the FREQ for the given block number or nullptr if not found.
+
+          @param[in]    block       Block number to look up FREQ for
+
+          @return                   Pointer to FREQ or nullptr if not found
+         */
+        Envelope* getFreq(uint8_t block);
+
+        /**
+          Get WAVE by block number.
+
+          Returns the WAVE for the given block number or nullptr if not found.
+
+          @param[in]    block       Block number to look up WAVE for
+
+          @return                   Pointer to WAVE or nullptr if not found
+         */
+        Wave* getWave(uint8_t block);
 
     protected:
         std::map<uint8_t, Icb>      m_icb;                  ///< ICB data

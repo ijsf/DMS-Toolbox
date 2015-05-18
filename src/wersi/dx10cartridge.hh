@@ -81,9 +81,14 @@ class Dx10Cartridge : public InstrumentStore {
         /// Implements InstrumentStore::update()
         virtual void update();
 
+        /// Implements InstrumentStore::getNumIcbs()
+        virtual size_t getNumIcbs() const {
+            return 10;
+        }
+
     private:
         uint8_t*                    m_buffer;           ///< Associated raw buffer
-        size_t                      m_size;
+        size_t                      m_size;             ///< Size of raw buffer
 
         Dx10Cartridge(const Dx10Cartridge&);            ///< Inhibit copying objects
         Dx10Cartridge& operator=(const Dx10Cartridge&); ///< Inhibit copying objects

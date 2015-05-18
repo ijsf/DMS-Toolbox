@@ -124,19 +124,19 @@ void Mk1Cartridge::dissect()
             if (tmp > maxIcb) {
                 maxIcb = tmp;
             }
-            tmp = icb.getVcf();
+            tmp = icb.getVcfBlock();
             if (tmp > maxVcf) {
                 maxVcf = tmp;
             }
-            tmp = icb.getAmpl();
+            tmp = icb.getAmplBlock();
             if (tmp > maxAmpl) {
                 maxAmpl = tmp;
             }
-            tmp = icb.getFreq();
+            tmp = icb.getFreqBlock();
             if (tmp > maxFreq) {
                 maxFreq = tmp;
             }
-            tmp = icb.getWave();
+            tmp = icb.getWaveBlock();
             if (tmp > maxWave) {
                 maxWave = tmp;
             }

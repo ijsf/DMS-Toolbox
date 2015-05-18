@@ -38,8 +38,10 @@
 #include <wersi/mk1cartridge.hh>
 #include <wersi/dx10cartridge.hh>
 #include <wersi/icb.hh>
+#include <wersi/vcf.hh>
 #include <exceptions.hh>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 using namespace std;
@@ -93,7 +95,52 @@ int main(int argc, char** argv)
     }
     if (is != nullptr) {
         for (auto& i : *is) {
-            cout << uint16_t(i.first) << " " << uint16_t(i.second.getNextIcb()) << " " << i.second.getName() << endl;
+            Icb& icb = i.second;
+            cout << "ICB " << setw(3) << uint16_t(i.first)
+                 << " (" << setw(6) << icb.getName() << ")"
+                 << ": Next " << setw(3) << uint16_t(icb.getNextIcb())
+                 << " V " << setw(3) << uint16_t(icb.getVcfBlock())
+                 << " A " << setw(3) << uint16_t(icb.getAmplBlock())
+                 << " F " << setw(3) << uint16_t(icb.getFreqBlock())
+                 << " W " << setw(3) << uint16_t(icb.getWaveBlock())
+                 << " O " << (icb.getLeft() ? 'L' : '-')
+                 << (icb.getRight() ? 'R' : '-')
+                 << (icb.getVcf() ? 'V' : '-')
+                 << (icb.getWersiVoice() ? 'W' : '-')
+                 << (icb.getBright() ? 'B' : '-')
+                 << " T " << setw(4) << int16_t(icb.getTranspose())
+                 << " D " << setw(4) << int16_t(icb.getDetune())
+                 << " WV " << setw(10) << icb.getWvModeName(icb.getWvMode())
+                 << " " << (icb.getWvLeft() ? 'L' : '-')
+                 << (icb.getWvRight() ? 'R' : '-')
+                 << (icb.getWvFbFlat() ? 'F' : '-')
+                 << (icb.getWvFbDeep() ? 'D' : '-')
+                 << " U " << hex << setw(4) << icb.getUnknownBits() << dec
+                 << endl;
+            Vcf* vcf = is->getVcf(icb.getVcfBlock());
+            if (vcf != nullptr) {
+                cout << "   VCF " << (vcf->getLeft() ? 'L' : '-')
+                     << (vcf->getRight() ? 'R' : '-')
+                     << (vcf->getWersiVoice() ? 'W' : '-')
+                     << (vcf->getNoise() ? 'N' : '-')
+                     << (vcf->getDistortion() ? 'D' : '-')
+                     << (vcf->getLowPass() ? " LP" : " BP")
+                     << (vcf->getFourPoles() ? '4' : '2')
+                     << " F " << setw(4) << int16_t(vcf->getFrequency())
+                     << " Q " << setw(3) << uint16_t(vcf->getQuality())
+                     << " NT " << setw(5) << vcf->getNoiseTypeName(vcf->getNoiseType())
+                     << " " << (vcf->getRetrigger() ? 'R' : '-')
+                     << (vcf->getTracking() ? 'T' : '-')
+                     << " ENV " << setw(15) << vcf->getEnvelopeModeName(vcf->getEnvelopeMode())
+                     << " T1 T " << setw(3) << uint16_t(vcf->getT1Time())
+                     << " I " << setw(4) << int16_t(vcf->getT1Intensity())
+                     << " O " << setw(4) << int16_t(vcf->getT1Offset())
+                     << " T2 T " << setw(3) << uint16_t(vcf->getT2Time())
+                     << " I " << setw(4) << int16_t(vcf->getT2Intensity())
+                     << " O " << setw(4) << int16_t(vcf->getT2Offset())
+                     << " U " << hex << setw(2) << uint16_t(vcf->getUnknownBits()) << dec
+                     << endl;
+            }
         }
 
         delete is;

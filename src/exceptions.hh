@@ -97,6 +97,15 @@ class Exception : public std::exception {
          */
         virtual const char* what() const throw();
 
+        /**
+          Add exception message data.
+
+          Adds more data to the exception dispatching the stream operator to the message stream.
+
+          @param[in]    val         Data to append to exception message
+
+          @return                   Reference to this object
+         */
         template<typename T>
         Exception& operator<<(T val) {
             m_stream << val;

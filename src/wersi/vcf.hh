@@ -38,6 +38,7 @@
 #pragma once
 
 #include <common.hh>
+#include <string>
 
 namespace DMSToolbox {
 namespace Wersi {
@@ -51,6 +52,22 @@ namespace Wersi {
  */
 class Vcf {
     public:
+        /// Noise type
+        enum class NoiseType {
+            Wind    = 0,                    ///< Wind
+            Patch   = 1,                    ///< Patch
+            Flute   = 2,                    ///< Flute
+            Invalid = 3                     ///y Invalid
+        };
+
+        /// Envelope mode
+        enum class EnvelopeMode {
+            T1      = 0,                    ///< T1
+            T1T2    = 1,                    ///< T1->T2
+            T1RT2   = 2,                    ///< T1->Release->T2
+            Rotor   = 3,                    ///< Rotor
+        };
+
         /**
           Create new VCF object from buffer.
 
@@ -105,23 +122,249 @@ class Vcf {
          */
         void update();
 
+        /**
+          Get left output enabled.
+
+          Returns true if the left output is enabled.
+
+          @return                   True if the left output is enabled
+         */
+        bool getLeft() const {
+            return m_left;
+        }
+
+        /**
+          Get right output enabled.
+
+          Returns true if the right output is enabled.
+
+          @return                   True if the right output is enabled
+         */
+        bool getRight() const {
+            return m_right;
+        }
+
+        /**
+          Get low pass enabled.
+
+          Returns true if the low pass is enabled.
+
+          @return                   True if low pass, false if band pass
+         */
+        bool getLowPass() const {
+            return m_lowPass;
+        }
+
+        /**
+          Get four poles enabled.
+
+          Returns true if four poles are enabled.
+
+          @return                   True if four poles, false if two poles
+         */
+        bool getFourPoles() const {
+            return m_fourPoles;
+        }
+
+        /**
+          Get WersiVoice output enabled.
+
+          Returns true if the WersiVoice output is enabled.
+
+          @return                   True if the WersiVoice output is enabled
+         */
+        bool getWersiVoice() const {
+            return m_wv;
+        }
+
+        /**
+          Get noise enabled.
+
+          Returns true if noise is enabled.
+
+          @return                   True if noise is enabled
+         */
+        bool getNoise() const {
+            return m_noise;
+        }
+
+        /**
+          Get distortion enabled.
+
+          Returns true if distortion is enabled.
+
+          @return                   True if distortion is enabled
+         */
+        bool getDistortion() const {
+            return m_distortion;
+        }
+
+        /**
+          Get frequency value.
+
+          Returns the frequency value.
+
+          @return                   Frequency value
+         */
+        int8_t getFrequency() const {
+            return m_frequency;
+        }
+
+        /**
+          Get quality value.
+
+          Returns the quality value.
+
+          @return                   Quality value
+         */
+        uint8_t getQuality() const {
+            return m_quality;
+        }
+
+        /**
+          Get noise type.
+
+          Returns the noise type.
+
+          @return                   Noise type
+         */
+        NoiseType getNoiseType() const {
+            return m_noiseType;
+        }
+
+        /**
+          Get retrigger enabled.
+
+          Returns true if retrigger is enabled.
+
+          @return                   True if retrigger is enabled
+         */
+        bool getRetrigger() const {
+            return m_retrigger;
+        }
+
+        /**
+          Get envelope mode.
+
+          Returns the envelope mode.
+
+          @return                   Envelope mode
+         */
+        EnvelopeMode getEnvelopeMode() const {
+            return m_envMode;
+        }
+
+        /**
+          Get tracking enabled.
+
+          Returns true if tracking is enabled.
+
+          @return                   True if tracking is enabled
+         */
+        bool getTracking() const {
+            return m_tracking;
+        }
+
+        /**
+          Get T1 time.
+
+          Returns the T1 time.
+
+          @return                   T1 time
+         */
+        uint8_t getT1Time() const {
+            return m_t1Time;
+        }
+
+        /**
+          Get T2 time.
+
+          Returns the T2 time.
+
+          @return                   T2 time
+         */
+        uint8_t getT2Time() const {
+            return m_t2Time;
+        }
+
+        /**
+          Get T1 intensity.
+
+          Returns the T1 intensity.
+
+          @return                   T1 intensity
+         */
+        int8_t getT1Intensity() const {
+            return m_t1Intensity;
+        }
+
+        /**
+          Get T1 offset.
+
+          Returns the T1 offest.
+
+          @return                   T1 offset
+         */
+        int8_t getT1Offset() const {
+            return m_t1Offset;
+        }
+
+        /**
+          Get T2 intensity.
+
+          Returns the T2 intensity.
+
+          @return                   T2 intensity
+         */
+        int8_t getT2Intensity() const {
+            return m_t2Intensity;
+        }
+
+        /**
+          Get T2 offset.
+
+          Returns the T2 offest.
+
+          @return                   T2 offset
+         */
+        int8_t getT2Offset() const {
+            return m_t2Offset;
+        }
+
+        /**
+          Get unknown bits.
+
+          Returns all bits from raw data that are currently unknown.
+
+          @return                   Unknown bits
+         */
+        uint8_t getUnknownBits() const {
+            return m_unknownBits;
+        }
+
+        /**
+          Get noise type name.
+
+          Returns the name for the given noise type or an empty string if invalid.
+
+          @param[in]    type        Noise type to look up
+
+          @return                   Name for given noise type
+         */
+        static std::string getNoiseTypeName(NoiseType type);
+
+        /**
+          Get envelope mode name.
+
+          Returns the name for the given envelope mode or an empty string if invalid.
+
+          @param[in]    mode        Envelope mode to look up
+
+          @return                   Name for given envelope mode
+         */
+        static std::string getEnvelopeModeName(EnvelopeMode mode);
+
     private:
-        // Noise type
-        enum class NoiseType {
-            Wind    = 0,                    ///< Wind
-            Patch   = 1,                    ///< Patch
-            Flute   = 2,                    ///< Flute
-            Invalid = 3                     ///y Invalid
-        };
-
-        // Envelope mode
-        enum class EnvelopeMode {
-            T1      = 0,                    ///< T1
-            T1T2    = 1,                    ///< T1->T2
-            T1RT2   = 2,                    ///< T1->Release->T2
-            Rotor   = 3,                    ///< Rotor
-        };
-
         uint8_t         m_blockNum;         ///< Block number
         uint8_t*        m_buffer;           ///< Associated raw buffer
 
@@ -144,6 +387,8 @@ class Vcf {
         int8_t          m_t1Offset;         ///< T1 envelope offset
         int8_t          m_t2Intensity;      ///< T2 envelope intensity
         int8_t          m_t2Offset;         ///< T2 envelope offset
+
+        uint8_t         m_unknownBits;      ///< Currently unknown bits
 };
 
 } // namespace Wersi
