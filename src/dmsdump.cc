@@ -103,6 +103,9 @@ int main(int argc, char** argv)
                  << " A " << setw(3) << uint16_t(icb.getAmplBlock())
                  << " F " << setw(3) << uint16_t(icb.getFreqBlock())
                  << " W " << setw(3) << uint16_t(icb.getWaveBlock())
+                 << " D " << setw(1) << uint16_t(icb.getDynamics())
+                 << (icb.getLowSelect() ? 'L' : '-')
+                 << (icb.getHighSelect() ? 'H' : '-')
                  << " O " << (icb.getLeft() ? 'L' : '-')
                  << (icb.getRight() ? 'R' : '-')
                  << (icb.getVcf() ? 'V' : '-')
@@ -115,7 +118,7 @@ int main(int argc, char** argv)
                  << (icb.getWvRight() ? 'R' : '-')
                  << (icb.getWvFbFlat() ? 'F' : '-')
                  << (icb.getWvFbDeep() ? 'D' : '-')
-                 << " U " << hex << setw(4) << icb.getUnknownBits() << dec
+                 << " U " << hex << setw(2) << uint16_t(icb.getUnknownBits()) << dec
                  << endl;
             Vcf* vcf = is->getVcf(icb.getVcfBlock());
             if (vcf != nullptr) {

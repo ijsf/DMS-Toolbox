@@ -173,6 +173,39 @@ class Icb {
         }
 
         /**
+          Get dynamics value.
+
+          Returns the dynamics value.
+
+          @return                   Dynamics value
+         */
+        uint8_t getDynamics() const {
+            return m_dynamics;
+        }
+
+        /**
+          Get low select enabled.
+
+          Returns true if low select is enabled.
+
+          @return                   True if low select is enabled
+         */
+        bool getLowSelect() const {
+            return m_lowSelect;
+        }
+
+        /**
+          Get high select enabled.
+
+          Returns true if high select is enabled.
+
+          @return                   True if high select is enabled
+         */
+        bool getHighSelect() const {
+            return m_highSelect;
+        }
+
+        /**
           Get left output enabled.
 
           Returns true if the left output is enabled.
@@ -346,6 +379,9 @@ class Icb {
         uint8_t         m_amplBlock;        ///< AMPL block pointer
         uint8_t         m_freqBlock;        ///< FREQ block pointer
         uint8_t         m_waveBlock;        ///< WAVE block pointer
+        uint8_t         m_dynamics;         ///< Dynamics level 0-3
+        bool            m_lowSelect;        ///< Voice only active on low dynamics
+        bool            m_highSelect;       ///< Voice only active on high dynamics
         bool            m_left;             ///< Left slave output enabled
         bool            m_right;            ///< Right slave output enabled
         bool            m_bright;           ///< Disable slave low pass on true
@@ -360,7 +396,7 @@ class Icb {
         bool            m_wvFbDeep;         ///< Feedback deep
         std::string     m_name;             ///< Voice name
 
-        uint16_t        m_unknownBits;      ///< Currently unknown bits
+        uint8_t         m_unknownBits;      ///< Currently unknown bits
 };
 
 } // namespace Wersi
