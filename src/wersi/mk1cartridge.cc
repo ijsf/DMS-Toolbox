@@ -112,7 +112,7 @@ void Mk1Cartridge::dissect()
         size_t maxWave = 0;
 
         // Extract ICBs
-        while (current < maxIcb) {
+        while (current <= maxIcb) {
             uint16_t idx = (current - 129) * 2 + icbPtr;
             idx = (m_buffer[idx] << 8) | m_buffer[idx + 1];
             if (idx >= 0x3ffe) {

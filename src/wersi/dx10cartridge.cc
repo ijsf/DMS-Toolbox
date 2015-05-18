@@ -80,14 +80,16 @@ void Dx10Cartridge::dissect()
         }
 
         // Verify rhythms/sequences checksum
-        check = 0;
-        for (size_t i = 0x2000; i < 0x3ffe; ++i) {
-            check += m_buffer[i];
-        }
-        dummy = (m_buffer[0x3ffe] << 8) | m_buffer[0x3fff];
-        dummy += check;
-        if (dummy != 0) {
-            throw DataFormatException("checksum verification for rhythms/sequences failed");
+        if (m_size > 8192) {
+            check = 0;
+            for (size_t i = 0x2000; i < 0x3ffe; ++i) {
+                check += m_buffer[i];
+            }
+            dummy = (m_buffer[0x3ffe] << 8) | m_buffer[0x3fff];
+            dummy += check;
+            if (dummy != 0) {
+                throw DataFormatException("checksum verification for rhythms/sequences failed");
+            }
         }
 
         // Skip presets

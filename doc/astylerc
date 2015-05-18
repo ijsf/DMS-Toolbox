@@ -1,0 +1,25 @@
+# DMS-Toolbox coding style as astylerc, needs astyle 2.04
+#
+# How to use in vim (gggqGdd):
+# autocmd BufNewFile,BufRead *.h,*.hh,*.cc set formatprg=astyle
+
+# Bracket style
+style=stroustrup
+
+# Bracket attachment settings
+attach-inlines
+attach-extern-c
+break-closing-brackets
+add-brackets
+
+# Indentation settings
+indent=spaces=4
+indent-classes
+indent-switches
+indent-cases
+indent-col1-comments
+
+# Padding, align pointer/reference operators to type
+pad-header
+align-pointer=type
+align-reference=type
