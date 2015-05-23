@@ -46,39 +46,27 @@ namespace Gui {
 /**
   @ingroup gui_group
 
-  Main frame implementation.
+  Wave panel implementation.
 
-  This class implements the parts of the main frame that are not included in the generated MainFrameBase class.
+  This class implements the wave panel allowing viewing and editing WAVE blocks.
  */
-class MainFrame : public MainFrameBase {
+class WavePanel : public WavePanelBase {
     public:
         /**
-          Create main frame.
+          Create wave panel.
 
-          Creates the main frame of DMS-Toolbox.
+          Creates the wave panel allowing viewing and editing WAVE blocks.
 
-          @param[in]    parent      Parent window this frame belongs to
+          @param[in]    parent      Parent window this panel belongs to
          */
-        MainFrame(wxWindow* parent);
-
-    protected:
-        /**
-          Instrument selection event handler.
-
-          This handler is called when an instrument (or folder) has been selected in the instrument tree.
-
-          @param[in]    event       Event for instrument selection
-         */
-        virtual void onInstSelect(wxTreeEvent& event);
+        WavePanel(wxWindow* parent);
 
     private:
-        wxPanel*        m_instPanel;        ///< Instrument panel
-        wxPanel*        m_envelopePanel;    ///< Envelope panel
-        wxPanel*        m_wavePanel;        ///< Wave panel
-        wxTreeItemId    m_root;             ///< Root node of the instrument tree
-        wxTreeItemId    m_instrument;       ///< Instruments node of the instrument tree
-        wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
+        wxPanel*    m_bassPanel;        ///< Bass wave drawing panel
+        wxPanel*    m_tenorPanel;       ///< Bass wave drawing panel
+        wxPanel*    m_altoPanel;        ///< Bass wave drawing panel
+        wxPanel*    m_sopranoPanel;     ///< Bass wave drawing panel
 };
 
-} // namespace Gui
+} // namespage Gui
 } // namespace DMSToolbox

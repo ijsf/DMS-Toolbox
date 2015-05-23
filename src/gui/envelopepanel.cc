@@ -35,50 +35,16 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
-#pragma once
-
-#include <common.hh>
-#include <gui/generated.h>
+#include <gui/envelopepanel.hh>
 
 namespace DMSToolbox {
 namespace Gui {
 
-/**
-  @ingroup gui_group
-
-  Main frame implementation.
-
-  This class implements the parts of the main frame that are not included in the generated MainFrameBase class.
- */
-class MainFrame : public MainFrameBase {
-    public:
-        /**
-          Create main frame.
-
-          Creates the main frame of DMS-Toolbox.
-
-          @param[in]    parent      Parent window this frame belongs to
-         */
-        MainFrame(wxWindow* parent);
-
-    protected:
-        /**
-          Instrument selection event handler.
-
-          This handler is called when an instrument (or folder) has been selected in the instrument tree.
-
-          @param[in]    event       Event for instrument selection
-         */
-        virtual void onInstSelect(wxTreeEvent& event);
-
-    private:
-        wxPanel*        m_instPanel;        ///< Instrument panel
-        wxPanel*        m_envelopePanel;    ///< Envelope panel
-        wxPanel*        m_wavePanel;        ///< Wave panel
-        wxTreeItemId    m_root;             ///< Root node of the instrument tree
-        wxTreeItemId    m_instrument;       ///< Instruments node of the instrument tree
-        wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
-};
+// Create envelope panel
+EnvelopePanel::EnvelopePanel(wxWindow* parent)
+    : EnvelopePanelBase(parent)
+{
+}
 
 } // namespace Gui
 } // namespace DMSToolbox

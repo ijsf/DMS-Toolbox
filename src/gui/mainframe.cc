@@ -36,14 +36,47 @@
  */
 
 #include <gui/mainframe.hh>
+#include <gui/instpanel.hh>
+#include <gui/envelopepanel.hh>
+#include <gui/wavepanel.hh>
+
+#include <iostream>
+using namespace std;
 
 namespace DMSToolbox {
 namespace Gui {
 
+// Create main frame
 MainFrame::MainFrame(wxWindow* parent)
     : MainFrameBase(parent)
+    , m_instPanel(new InstPanel(m_mainTabs))
+    , m_envelopePanel(new EnvelopePanel(m_mainTabs))
+    , m_wavePanel(new WavePanel(m_mainTabs))
 {
+    // Add panels
+    m_mainTabs->AddPage(m_instPanel, _("Basic"), true);
+    m_mainTabs->AddPage(m_envelopePanel, _("Envelopes"), false);
+    m_mainTabs->AddPage(m_wavePanel, _("Waves"), false);
+    m_mainTabs->Fit();
+    Fit();
 
+    // TODO dummy data
+    m_root = m_instTree->AddRoot(_("Instruments"));
+    m_instrument = m_instTree->AppendItem(m_root, wxT("MK1"));
+    m_cartridges = m_instTree->AppendItem(m_root, wxT("Cartridges"));
+
+    m_instTree->AppendItem(m_instrument, wxT("Bank 1"));
+
+    m_instTree->AppendItem(m_cartridges, wxT("DX10V1 ROM 1"));
+    m_instTree->AppendItem(m_cartridges, wxT("MK1 ROM 1"));
+    m_instTree->AppendItem(m_cartridges, wxT("MK1 ROM 2"));
+    m_instTree->AppendItem(m_cartridges, wxT("MK1 ROM 3"));
+}
+
+// Handle instrument selection
+void MainFrame::onInstSelect(wxTreeEvent& /*event*/)
+{
+    cout << "Instrument selected" << endl;
 }
 
 } // namespace Gui

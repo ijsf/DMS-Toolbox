@@ -46,38 +46,20 @@ namespace Gui {
 /**
   @ingroup gui_group
 
-  Main frame implementation.
+  Envelope panel implementation.
 
-  This class implements the parts of the main frame that are not included in the generated MainFrameBase class.
+  This class implements the envelope panel logic.
  */
-class MainFrame : public MainFrameBase {
+class EnvelopePanel : public EnvelopePanelBase {
     public:
         /**
-          Create main frame.
+          Create envelope panel.
 
-          Creates the main frame of DMS-Toolbox.
+          Creates the envelope panel allowing editing the AMPL and FREQ envelopes.
 
-          @param[in]    parent      Parent window this frame belongs to
+          @param[in]    parent      Parent window this panel belongs to
          */
-        MainFrame(wxWindow* parent);
-
-    protected:
-        /**
-          Instrument selection event handler.
-
-          This handler is called when an instrument (or folder) has been selected in the instrument tree.
-
-          @param[in]    event       Event for instrument selection
-         */
-        virtual void onInstSelect(wxTreeEvent& event);
-
-    private:
-        wxPanel*        m_instPanel;        ///< Instrument panel
-        wxPanel*        m_envelopePanel;    ///< Envelope panel
-        wxPanel*        m_wavePanel;        ///< Wave panel
-        wxTreeItemId    m_root;             ///< Root node of the instrument tree
-        wxTreeItemId    m_instrument;       ///< Instruments node of the instrument tree
-        wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
+        EnvelopePanel(wxWindow* parent);
 };
 
 } // namespace Gui

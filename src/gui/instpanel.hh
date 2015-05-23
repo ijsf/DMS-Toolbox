@@ -46,38 +46,27 @@ namespace Gui {
 /**
   @ingroup gui_group
 
-  Main frame implementation.
+  Instrument panel implementation.
 
-  This class implements the parts of the main frame that are not included in the generated MainFrameBase class.
+  This class implements the instrument panel providing editors for ICB and VCF data.
  */
-class MainFrame : public MainFrameBase {
+class InstPanel : public InstPanelBase {
     public:
         /**
-          Create main frame.
+          Create instrument panel.
 
-          Creates the main frame of DMS-Toolbox.
+          Creates the instrument panel providing editors for ICB and VCF data.
 
           @param[in]    parent      Parent window this frame belongs to
          */
-        MainFrame(wxWindow* parent);
+        InstPanel(wxWindow* parent);
 
     protected:
-        /**
-          Instrument selection event handler.
-
-          This handler is called when an instrument (or folder) has been selected in the instrument tree.
-
-          @param[in]    event       Event for instrument selection
-         */
-        virtual void onInstSelect(wxTreeEvent& event);
-
-    private:
-        wxPanel*        m_instPanel;        ///< Instrument panel
-        wxPanel*        m_envelopePanel;    ///< Envelope panel
-        wxPanel*        m_wavePanel;        ///< Wave panel
-        wxTreeItemId    m_root;             ///< Root node of the instrument tree
-        wxTreeItemId    m_instrument;       ///< Instruments node of the instrument tree
-        wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
+        void onIcbChoice(wxCommandEvent& event);
+        void onVcfChoice(wxCommandEvent& event);
+        void onAmplChoice(wxCommandEvent& event);
+        void onFreqChoice(wxCommandEvent& event);
+        void onWaveChoice(wxCommandEvent& event);
 };
 
 } // namespace Gui
