@@ -108,6 +108,72 @@ class Wave {
          */
         void update();
 
+        /**
+          Get fixed formants state.
+
+          Returns true if this wave is a fixed formants wave.
+
+          @return                   True for fixed formants wave
+         */
+        bool getFixedFormants() const {
+            return m_fixedFormants;
+        }
+
+        /**
+          Get wave level.
+
+          Returns the wave level.
+
+          @return                   Wave level
+         */
+        uint8_t getLevel() const {
+            return m_level;
+        }
+
+        /**
+          Get bass wave.
+
+          Returns a pointer to the 64-byte bass wave.
+
+          @return                   Pointer to 64-byte bass wave
+         */
+        uint8_t* getBass() {
+            return m_bassWave;
+        }
+
+        /**
+          Get tenor wave.
+
+          Returns a pointer to the 64-byte tenor wave.
+
+          @return                   Pointer to 64-byte tenor wave
+         */
+        uint8_t* getTenor() {
+            return m_tenorWave;
+        }
+
+        /**
+          Get also wave.
+
+          Returns a pointer to the 32-byte alto wave.
+
+          @return                   Pointer to 32-byte alto wave
+         */
+        uint8_t* getAlto() {
+            return m_altoWave;
+        }
+
+        /**
+          Get soprano wave.
+
+          Returns a pointer to the 16-byte soprano wave.
+
+          @return                   Pointer to 16-byte soprano wave
+         */
+        uint8_t* getSoprano() {
+            return m_sopranoWave;
+        }
+
     private:
         uint8_t         m_blockNum;         ///< Block number
         uint8_t*        m_buffer;           ///< Associated raw buffer

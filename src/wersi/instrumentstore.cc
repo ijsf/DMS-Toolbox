@@ -47,8 +47,10 @@ namespace DMSToolbox {
 namespace Wersi {
 
 // Create new instrument store
-InstrumentStore::InstrumentStore()
-    : m_icb()
+InstrumentStore::InstrumentStore(void* buffer, size_t size)
+    : m_buffer(static_cast<uint8_t*>(buffer))
+    , m_size(size)
+    , m_icb()
     , m_vcf()
     , m_ampl()
     , m_freq()

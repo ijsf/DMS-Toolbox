@@ -36,6 +36,9 @@
  */
 
 #include <gui/envelopepanel.hh>
+#include <wersi/envelope.hh>
+
+using namespace DMSToolbox::Wersi;
 
 namespace DMSToolbox {
 namespace Gui {
@@ -43,7 +46,16 @@ namespace Gui {
 // Create envelope panel
 EnvelopePanel::EnvelopePanel(wxWindow* parent)
     : EnvelopePanelBase(parent)
+    , m_ampl(nullptr)
+    , m_freq(nullptr)
 {
+}
+
+// Set envelopes to edit
+void EnvelopePanel::setEnvelopes(Envelope* ampl, Envelope* freq)
+{
+    m_ampl = ampl;
+    m_freq = freq;
 }
 
 } // namespace Gui

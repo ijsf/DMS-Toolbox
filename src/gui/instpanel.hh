@@ -41,6 +41,14 @@
 #include <gui/generated.h>
 
 namespace DMSToolbox {
+
+namespace Wersi {
+// Forward declarations
+class InstrumentStore;
+class Icb;
+class Vcf;
+} // namespace Wersi
+
 namespace Gui {
 
 /**
@@ -61,7 +69,23 @@ class InstPanel : public InstPanelBase {
          */
         InstPanel(wxWindow* parent);
 
+        /**
+          Set instrument to edit.
+
+          Sets the instrument to edit, updating all fields and associating the ICB and VCF blocks with the panel
+          to apply changes in the GUI to them.
+
+          @param[in]    store       Instrument store to get data from
+          @param[in]    icbNum      ICB number
+         */
+        void setInstrument(Wersi::InstrumentStore* store, uint8_t icbNum);
+
     protected:
+        Wersi::InstrumentStore*     m_store;        ///< Instrument store data belongs to
+        uint8_t                     m_icbNum;       ///< Block number of ICB being edited
+        Wersi::Icb*                 m_icb;          ///< Pointer to ICB being edited
+        Wersi::Vcf*                 m_vcf;          ///< Pointer to VCF being edited
+
         void onIcbChoice(wxCommandEvent& event);
         void onVcfChoice(wxCommandEvent& event);
         void onAmplChoice(wxCommandEvent& event);

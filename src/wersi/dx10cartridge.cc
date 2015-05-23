@@ -47,9 +47,7 @@ namespace Wersi {
 
 // Create new DX10/DX5 cartridge object
 Dx10Cartridge::Dx10Cartridge(void* buffer, size_t size, bool /*initialize*/)
-    : InstrumentStore()
-    , m_buffer(static_cast<uint8_t*>(buffer))
-    , m_size(size)
+    : InstrumentStore(buffer, size)
 {
     dissect();
 }

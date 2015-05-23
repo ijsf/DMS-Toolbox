@@ -49,8 +49,7 @@ namespace Wersi {
 
 // Create new MK1 cartridge object
 Mk1Cartridge::Mk1Cartridge(void* buffer, bool /*initialize*/)
-    : InstrumentStore()
-    , m_buffer(static_cast<uint8_t*>(buffer))
+    : InstrumentStore(buffer, 16384)
 {
     dissect();
 }

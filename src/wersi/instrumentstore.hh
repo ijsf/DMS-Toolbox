@@ -64,8 +64,11 @@ class InstrumentStore {
           Creates a new instrument store. If an explicit update() is called, the update() method of all contained
           objects is called to update their part of the buffer, then the store raw buffer is updated with this new
           information.
+
+          @param[in]    buffer      Raw data buffer
+          @param[in]    size        Raw data buffer size
          */
-        InstrumentStore();
+        InstrumentStore(void* buffer, size_t size);
 
         /**
           Destroy instrument store.
@@ -73,6 +76,28 @@ class InstrumentStore {
           Destroys the instrument store.
          */
         virtual ~InstrumentStore();
+
+        /**
+          Get buffer pointer.
+
+          Return raw buffer pointer.
+
+          @return                   Raw buffer pointer
+         */
+        virtual void* getBuffer() {
+            return m_buffer;
+        }
+
+        /**
+          Get buffer size.
+
+          Return raw buffer size.
+
+          @return                   Raw buffer size
+         */
+        virtual size_t getBufferSize() {
+            return m_size;
+        }
 
         /**
           Dissect instrument store raw data buffer.
@@ -171,6 +196,9 @@ class InstrumentStore {
         Wave* getWave(uint8_t block);
 
     protected:
+        uint8_t*                    m_buffer;               ///< Raw data buffer
+        size_t                      m_size;                 ///< Raw data buffer size
+
         std::map<uint8_t, Icb>      m_icb;                  ///< ICB data
         std::map<uint8_t, Vcf>      m_vcf;                  ///< VCF data
         std::map<uint8_t, Envelope> m_ampl;                 ///< AMPL data

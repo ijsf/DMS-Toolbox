@@ -86,8 +86,6 @@ class Mk1Cartridge : public InstrumentStore {
         }
 
     private:
-        uint8_t*                    m_buffer;           ///< Associated raw buffer
-
         Mk1Cartridge(const Mk1Cartridge&);              ///< Inhibit copying objects
         Mk1Cartridge& operator=(const Mk1Cartridge&);   ///< Inhibit copying objects
 };

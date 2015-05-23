@@ -41,6 +41,12 @@
 #include <gui/generated.h>
 
 namespace DMSToolbox {
+
+namespace Wersi {
+// Forward declarations
+class Envelope;
+} // namespace Wersi
+
 namespace Gui {
 
 /**
@@ -60,6 +66,21 @@ class EnvelopePanel : public EnvelopePanelBase {
           @param[in]    parent      Parent window this panel belongs to
          */
         EnvelopePanel(wxWindow* parent);
+
+        /**
+          Set envelopes to edit.
+
+          Sets the envelopes to edit, updating all fields and associating the AMPL and FREQ envelopes with the
+          panel to apply changes in the GUI to them.
+
+          @param[in]    ampl        AMPL envelope
+          @param[in]    freq        FREQ envelope
+         */
+        void setEnvelopes(Wersi::Envelope* ampl, Wersi::Envelope* freq);
+
+    private:
+        Wersi::Envelope*    m_ampl;     ///< AMPL envelope being edited
+        Wersi::Envelope*    m_freq;     ///< FREQ envelope being edited
 };
 
 } // namespace Gui

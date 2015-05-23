@@ -41,6 +41,12 @@
 #include <gui/generated.h>
 
 namespace DMSToolbox {
+
+namespace Wersi {
+// Forward declarations
+class Wave;
+} // namespace Wersi
+
 namespace Gui {
 
 /**
@@ -61,11 +67,32 @@ class WavePanel : public WavePanelBase {
          */
         WavePanel(wxWindow* parent);
 
+        /**
+          Set wave data to edit.
+
+          Sets the wave data to edit, updating all fields and associating the wave data with the panel to apply changes
+          in the GUI to it.
+
+          @param[in]    wave        Wave data
+         */
+        void setWave(Wersi::Wave* wave);
+
     private:
-        wxPanel*    m_bassPanel;        ///< Bass wave drawing panel
-        wxPanel*    m_tenorPanel;       ///< Bass wave drawing panel
-        wxPanel*    m_altoPanel;        ///< Bass wave drawing panel
-        wxPanel*    m_sopranoPanel;     ///< Bass wave drawing panel
+        wxPanel*        m_bassPanel;    ///< Bass wave drawing panel
+        wxPanel*        m_tenorPanel;   ///< Bass wave drawing panel
+        wxPanel*        m_altoPanel;    ///< Bass wave drawing panel
+        wxPanel*        m_sopranoPanel; ///< Bass wave drawing panel
+
+        Wersi::Wave*    m_wave;         ///< Wave data being edited
+
+        /**
+          Handle paint event.
+
+          Handles a paint event and redraws a wave.
+
+          @param[in]    event       wxWidgets paint event
+         */
+        void onPaint(wxPaintEvent& event);
 };
 
 } // namespage Gui

@@ -36,6 +36,11 @@
  */
 
 #include <gui/wavepanel.hh>
+#include <wersi/wave.hh>
+#include <wx/dcmemory.h>
+#include <memory>
+
+using namespace DMSToolbox::Wersi;
 
 namespace DMSToolbox {
 namespace Gui {
@@ -43,15 +48,83 @@ namespace Gui {
 // Create wave panel
 WavePanel::WavePanel(wxWindow* parent)
     : WavePanelBase(parent)
-    , m_bassPanel(new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
-    , m_tenorPanel(new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
-    , m_altoPanel(new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
-    , m_sopranoPanel(new wxPanel(parent, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
+    , m_bassPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
+    , m_tenorPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
+    , m_altoPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
+    , m_sopranoPanel(new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(512, 256)))
+    , m_wave(nullptr)
 {
     m_bassPanelSizer->Add(m_bassPanel, 1, wxALIGN_CENTER | wxALL, 10);
+    m_bassPanel->Connect(wxEVT_PAINT, wxPaintEventHandler(WavePanel::onPaint), NULL, this);
     m_tenorPanelSizer->Add(m_tenorPanel, 1, wxALIGN_CENTER | wxALL, 10);
+    m_tenorPanel->Connect(wxEVT_PAINT, wxPaintEventHandler(WavePanel::onPaint), NULL, this);
     m_altoPanelSizer->Add(m_altoPanel, 1, wxALIGN_CENTER | wxALL, 10);
+    m_altoPanel->Connect(wxEVT_PAINT, wxPaintEventHandler(WavePanel::onPaint), NULL, this);
     m_sopranoPanelSizer->Add(m_sopranoPanel, 1, wxALIGN_CENTER | wxALL, 10);
+    m_sopranoPanel->Connect(wxEVT_PAINT, wxPaintEventHandler(WavePanel::onPaint), NULL, this);
+}
+
+// Set wave to edit
+void WavePanel::setWave(Wave* wave)
+{
+    m_wave = wave;
+    if (m_wave != nullptr) {
+        m_waveLevelSlider->SetValue(m_wave->getLevel());
+        m_fixedWaveCheckBox->SetValue(m_wave->getFixedFormants());
+    }
+
+    Refresh();
+    Update();
+}
+
+// Handle paint event
+void WavePanel::onPaint(wxPaintEvent& event)
+{
+    wxObject* obj = event.GetEventObject();
+    uint8_t* source = nullptr;
+    size_t size = 0;
+    wxPanel* target = nullptr;
+    if (obj == m_bassPanel) {
+        if (m_wave != nullptr) {
+            source = m_wave->getBass();
+            size = 64;
+        }
+        target = m_bassPanel;
+    }
+    else if (obj == m_tenorPanel) {
+        if (m_wave != nullptr) {
+            source = m_wave->getTenor();
+            size = 64;
+        }
+        target = m_tenorPanel;
+    }
+    else if (obj == m_altoPanel) {
+        if (m_wave != nullptr) {
+            source = m_wave->getAlto();
+            size = 32;
+        }
+        target = m_altoPanel;
+    }
+    else if (obj == m_sopranoPanel) {
+        if (m_wave != nullptr) {
+            source = m_wave->getSoprano();
+            size = 16;
+        }
+        target = m_sopranoPanel;
+    }
+
+    if (target != nullptr) {
+        wxPaintDC dc(target);
+        dc.Clear();
+        if (source != nullptr) {
+            std::unique_ptr<wxPoint[]> points(new wxPoint[size]);
+            size_t factor = 512 / size;
+            for (size_t i = 0; i < size; ++i) {
+                points[i] = wxPoint(i * factor, source[i]);
+            }
+            dc.DrawSpline(size, points.get());
+        }
+    }
 }
 
 } // namespace Gui
