@@ -23,6 +23,41 @@ if(wxWidgets_FOUND)
 endif(wxWidgets_FOUND)
 
 # -----------------------------------------------------------------------------
+# - Check for RtMidi                                                          -
+# -----------------------------------------------------------------------------
+find_path(RTMIDI_INCLUDE_DIR
+    NAMES RtMidi.h
+    PATHS /usr/include /usr/local/include /opt/local/include "${RTMIDI_ROOT_DIR}"
+)
+set(RTMIDI_LIBNAME rtmidi)
+if(WIN32)
+    set(RTMIDI_LIBNAME rtmidi.lib)
+endif(WIN32)
+find_library(RTMIDI_LIBRARY
+    NAMES ${RTMIDI_LIBNAME}
+    PATHS /usr/lib /usr/local/lib /opt/local/lib "${RTMIDI_ROOT_DIR}/i386"
+)
+if(WIN32 AND RTMIDI_LIBRARY)
+  get_filename_component(rtmidi_lib_path ${RTMIDI_LIBRARY} PATH)
+  set(RTMIDI_DLL ${rtmidi_lib_path}/rtmidi.dll)
+endif(WIN32 AND RTMIDI_LIBRARY)
+if(RTMIDI_LIBRARY)
+    if(RTMIDI_INCLUDE_DIR)
+        set(RTMIDI_FOUND TRUE)
+        message(STATUS "Found RtMidi")
+    else(RTMIDI_INCLUDE_DIR)
+        set(RTMIDI_FOUND FALSE)
+    endif(RTMIDI_INCLUDE_DIR)
+else(RTMIDI_LIBRARY)
+    set(RTMIDI_FOUND FALSE)
+endif(RTMIDI_LIBRARY)
+if(RTMIDI_FOUND)
+    include_directories("${RTMIDI_INCLUDE_DIR}")
+    set(BUILD_MIDI 1)
+    add_definitions(-DHAVE_RTMIDI)
+endif(RTMIDI_FOUND)
+
+# -----------------------------------------------------------------------------
 # - Core library                                                              -
 # -----------------------------------------------------------------------------
 set(SOURCES

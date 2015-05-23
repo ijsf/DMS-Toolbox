@@ -38,6 +38,7 @@
 #include <gui/wavepanel.hh>
 #include <wersi/wave.hh>
 #include <wx/dcmemory.h>
+#include <wx/dcclient.h>
 #include <memory>
 
 using namespace DMSToolbox::Wersi;
