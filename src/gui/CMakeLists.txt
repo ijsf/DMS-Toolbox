@@ -2,7 +2,7 @@
 # - GUI library and executables                                               -
 # -----------------------------------------------------------------------------
 set(SOURCES
-	${PROJECT_BINARY_DIR}/src/gui/generated.cpp
+	generated.cpp
 	mainframe.cc
 	instpanel.cc
 	envelopepanel.cc
@@ -11,18 +11,21 @@ set(SOURCES
 )
 
 set(HEADERS
-	${PROJECT_BINARY_DIR}/src/gui/generated.h
+	generated.h
 	mainframe.hh
 	instpanel.hh
 	envelopepanel.hh
 	wavepanel.hh
 )
 
+file(COPY
+	DMS-Toolbox.fbp
+	DESTINATION .
+)
+
 add_custom_command(
-	OUTPUT ${PROJECT_BINARY_DIR}/src/gui/generated.cpp
-	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}/src/gui
+	OUTPUT generated.cpp
 	DEPENDS DMS-Toolbox.fbp
-	COMMAND cp -f ${PROJECT_SOURCE_DIR}/src/gui/DMS-Toolbox.fbp .
 	COMMAND wxformbuilder -g DMS-Toolbox.fbp
 )
 
