@@ -41,5 +41,5 @@
 #ifdef WIN32
 // TODO suppress warnings in wxWidgets header files
 #pragma warning ( disable : 4996 )
-#include <gui/generated.h>
 #endif // WIN32
+#include <gui/generated.h>
