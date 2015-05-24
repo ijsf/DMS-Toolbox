@@ -39,6 +39,7 @@
 #include <gui/instpanel.hh>
 #include <gui/envelopepanel.hh>
 #include <gui/wavepanel.hh>
+#include <gui/adddevicedialog.hh>
 #include <exceptions.hh>
 #include <wersi/mk1cartridge.hh>
 #include <wersi/dx10cartridge.hh>
@@ -115,9 +116,90 @@ void MainFrame::applyConfiguration()
     }
 }
 
+// Handle instrument deletion
+void MainFrame::onInstDelete(wxTreeEvent& event)
+{
+    event.Veto();
+}
+
+// Handle instrument rename begin
+void MainFrame::onInstRenameBegin(wxTreeEvent& event)
+{
+    // Check if a rename is allowed
+    auto ren = m_instTree->GetItemData(event.GetItem());
+
+    if (ren != nullptr) {
+        auto inst = dynamic_cast<InstrumentHelper*>(ren);
+        auto store = inst->getStore();
+        auto icbNum = inst->getIcb();
+        if (store != nullptr && icbNum == 0) {
+            // Only instrument stores may be renamed
+            return;
+        }
+    }
+
+    event.Veto();
+}
+
+// Handle instrument rename
+void MainFrame::onInstRename(wxTreeEvent& event)
+{
+    if (event.IsEditCancelled()) {
+        return;
+    }
+    auto id = event.GetItem();
+    auto ren = m_instTree->GetItemData(id);
+    if (ren != nullptr) {
+        auto inst = dynamic_cast<InstrumentHelper*>(ren);
+        auto store = inst->getStore();
+        auto icbNum = inst->getIcb();
+        if (store != nullptr && icbNum == 0) {
+            // Scan through instrument stores and check for duplicate name
+            auto newLabel = event.GetLabel();
+            wxString oldLabel;
+            bool veto = false;
+            for (auto& i : m_instrumentStores) {
+                if (i.second == store) {
+                    oldLabel = i.first;
+                }
+                if (i.first == newLabel) {
+                    veto = true;
+                    break;
+                }
+            }
+
+            // Check if rename is allowed
+            if (!veto) {
+                m_config.SetPath(wxT("/Cartridges"));
+                veto = !m_config.RenameEntry(oldLabel, newLabel);
+            }
+            if (veto) {
+                event.Veto();
+                wxMessageDialog err(this, _("Instrument store with this name already exists"),
+                                    _("Could not rename"), wxOK | wxCENTRE | wxICON_ERROR);
+                err.ShowModal();
+            }
+            else {
+                auto old = m_instrumentStores.find(oldLabel);
+                if (old != m_instrumentStores.end()) {
+                    m_instrumentStores.erase(old);
+                }
+                m_instrumentStores.insert(std::pair<wxString, InstrumentStore*>(newLabel, store));
+            }
+        }
+    }
+}
+
 // Handle instrument selection
 void MainFrame::onInstSelect(wxTreeEvent& event)
 {
+    // Check for MIDI device add
+    if (event.GetItem() == m_devices) {
+        AddDeviceDialog dlg(this);
+        dlg.ShowModal();
+        return;
+    }
+
     //auto prevSel = m_instTree->GetItemData(event.GetOldItem());
     auto sel = m_instTree->GetItemData(event.GetItem());
 
@@ -212,7 +294,7 @@ void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cart
                 instName << wxString::From8BitData(i.second.getName().c_str());
                 m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(store, i.first));
             }
-            m_instrumentStores.insert(std::pair<wxTreeItemId, InstrumentStore*>(id, store));
+            m_instrumentStores.insert(std::pair<wxString, InstrumentStore*>(cartName, store));
         }
         catch (...) {
             if (store != nullptr) {

@@ -7,6 +7,7 @@ set(SOURCES
 	instpanel.cc
 	envelopepanel.cc
 	wavepanel.cc
+	adddevicedialog.cc
 	dmstb.cc
 )
 
@@ -16,6 +17,7 @@ set(HEADERS
 	mainframe.hh
 	instpanel.hh
 	envelopepanel.hh
+	adddevicedialog.hh
 	wavepanel.hh
 )
 

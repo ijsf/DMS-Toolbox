@@ -91,6 +91,33 @@ class MainFrame : public MainFrameBase {
 
     protected:
         /**
+          Instrument deletion event handler.
+
+          This handler is called when an instrument (or folder) is to be deleted in the instrument tree.
+
+          @param[in]    event       Event for instrument deletion
+         */
+        virtual void onInstDelete(wxTreeEvent& event);
+
+        /**
+          Instrument rename begin event handler.
+
+          This handler is called when an instrument (or folder) is to be renamed in the instrument tree.
+
+          @param[in]    event       Event for instrument renaming
+         */
+        virtual void onInstRenameBegin(wxTreeEvent& event);
+
+        /**
+          Instrument rename event handler.
+
+          This handler is called when an instrument (or folder) has been renamed in the instrument tree.
+
+          @param[in]    event       Event for instrument renaming
+         */
+        virtual void onInstRename(wxTreeEvent& event);
+
+        /**
           Instrument selection event handler.
 
           This handler is called when an instrument (or folder) has been selected in the instrument tree.
@@ -152,8 +179,8 @@ class MainFrame : public MainFrameBase {
         wxTreeItemId    m_devices;          ///< Devices node of the instrument tree
         wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
 
-        /// Instrument stores, mapped to tree item IDs
-        std::map<wxTreeItemId, Wersi::InstrumentStore*>    m_instrumentStores;
+        /// Instrument stores, mapped to names
+        std::map<wxString, Wersi::InstrumentStore*> m_instrumentStores;
 
         /**
           Read cartridge file and create instrument store from it.
