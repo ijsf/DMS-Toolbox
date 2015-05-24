@@ -58,6 +58,7 @@ namespace Gui {
 // Create main frame
 MainFrame::MainFrame(wxWindow* parent)
     : MainFrameBase(parent)
+    , m_config(wxT("DMS-Toolbox"), wxT("MusicMiK"))
     , m_instPanel(new InstPanel(m_mainTabs))
     , m_envelopePanel(new EnvelopePanel(m_mainTabs))
     , m_wavePanel(new WavePanel(m_mainTabs))
@@ -78,6 +79,40 @@ MainFrame::MainFrame(wxWindow* parent)
 
     // Do the window layout
     Fit();
+}
+
+// Destroy main frame
+MainFrame::~MainFrame()
+{
+    for (auto& i : m_instrumentStores) {
+        auto buffer = static_cast<uint8_t*>(i.second->getBuffer());
+        delete[] buffer;
+    }
+}
+
+// Apply configuration
+void MainFrame::applyConfiguration()
+{
+    // Read cartridges opened last time
+    m_config.SetPath(wxT("/Cartridges"));
+    wxString name;
+    long index;
+    bool cont = m_config.GetFirstEntry(name, index);
+    while (cont) {
+        wxString path = m_config.Read(name);
+        try {
+            readCartridgeFile(path, name);
+        }
+        catch (Exception& e) {
+            wxString msg(_("Cartridge file '"));
+            msg << path << _("' could not be read, reason: ");
+            msg << wxString::FromUTF8(e.what());
+            wxMessageDialog err(this, msg, _("Could not load cartridge"),
+                                wxOK | wxCENTRE | wxICON_ERROR);
+            err.ShowModal();
+        }
+        cont = m_config.GetNextEntry(name, index);
+    }
 }
 
 // Handle instrument selection
@@ -110,19 +145,42 @@ void MainFrame::onFileOpen(wxCommandEvent& /*event*/)
     if (dlg.ShowModal() == wxID_CANCEL) {
         return;
     }
+    wxFileName fn(dlg.GetPath());
+    try {
+        readCartridgeFile(dlg.GetPath(), fn.GetFullName());
+        m_config.SetPath(wxT("/Cartridges"));
+        m_config.Write(fn.GetFullName(), dlg.GetPath());
+        m_config.Flush();
+    }
+    catch (Exception& e) {
+        wxMessageDialog err(this, wxString::FromUTF8(e.what()), _("Could not load cartridge"),
+                            wxOK | wxCENTRE | wxICON_ERROR);
+        err.ShowModal();
+    }
+}
 
+// Handle edit/rename menu item
+void MainFrame::onEditRename(wxCommandEvent& /*event*/)
+{
+}
+
+// Read cartridge file and create instrument store from it.
+void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cartName)
+{
     // Open and check file
-    wxFile file(dlg.GetPath(), wxFile::read);
+    if (!wxFile::Exists(filePath)) {
+        throw SystemException("File does not exist");
+    }
+    wxFile file(filePath, wxFile::read);
     wxFileOffset size = file.Length();
+    if (size != 8192 && size != 16384) {
+        throw DataFormatException("Invalid file size (must be 8 or 16 KB)");
+    }
     wxFileInputStream fileStream(file);
     if (fileStream.IsOk()) {
-        char* buffer(nullptr);
         InstrumentStore* store(nullptr);
+        char* buffer(new char[size]);
         try {
-            if (size != 8192 && size != 16384) {
-                throw DataFormatException("Invalid file size (must be 8 or 16 KB)");
-            }
-            buffer = new char[size];
             fileStream.Read(buffer, size);
             if (fileStream.LastRead() != size_t(size)) {
                 throw DataFormatException("Could not read whole cartridge data");
@@ -147,37 +205,28 @@ void MainFrame::onFileOpen(wxCommandEvent& /*event*/)
                 throw DataFormatException("Unknown cartridge format");
             }
 
-            wxFileName fn(dlg.GetPath());
-            auto id = m_instTree->AppendItem(m_cartridges, fn.GetFullName(),
-                                             -1, -1, new InstrumentHelper(store, 0));
+            auto id = m_instTree->AppendItem(m_cartridges, cartName, -1, -1, new InstrumentHelper(store, 0));
             for (auto& i : *store) {
-                Icb& icb = i.second;
-                m_instTree->AppendItem(id, wxString::From8BitData(icb.getName().c_str()),
-                                       -1, -1, new InstrumentHelper(store, i.first));
+                wxString instName(wxT("("));
+                instName << uint16_t(i.first) << wxT(") ");
+                instName << wxString::From8BitData(i.second.getName().c_str());
+                m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(store, i.first));
             }
+            m_instrumentStores.insert(std::pair<wxTreeItemId, InstrumentStore*>(id, store));
         }
-        catch (Exception& e) {
+        catch (...) {
             if (store != nullptr) {
                 delete store;
             }
             if (buffer != nullptr) {
                 delete[] buffer;
             }
-            wxMessageDialog err(this, wxString::FromUTF8(e.what()), _("Could not load cartridge"),
-                                wxOK | wxCENTRE | wxICON_ERROR);
-            err.ShowModal();
+            throw;
         }
     }
     else {
-        wxMessageDialog err(this, _("File has invalid size"), _("Could not load cartridge"),
-                            wxOK | wxCENTRE | wxICON_ERROR);
-        err.ShowModal();
+        throw SystemException("Unable to open file");
     }
-}
-
-// Handle edit/rename menu item
-void MainFrame::onEditRename(wxCommandEvent& /*event*/)
-{
 }
 
 } // namespace Gui

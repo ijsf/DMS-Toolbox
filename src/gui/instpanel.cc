@@ -72,17 +72,32 @@ void InstPanel::setInstrument(Wersi::InstrumentStore* store, uint8_t icbNum)
 
     // Handle ICB
     if (m_icb != nullptr) {
+        // Get number of primary ICBs
+        size_t numIcb = store->getNumIcbs();
+
+        // Construct ICB choice list
         m_nextIcbChoice->Clear();
         m_nextIcbChoice->Append(_("none"));
         m_nextIcbChoice->SetSelection(0);
         uint8_t tmp = m_icb->getNextIcb();
         for (auto& i : *m_store) {
-            m_nextIcbChoice->Append(wxString::From8BitData(i.second.getName().c_str()));
+            wxString instName(wxT("("));
+            instName << uint16_t(i.first) << wxT(") ");
+            instName << wxString::From8BitData(i.second.getName().c_str());
+            m_nextIcbChoice->Append(instName);
             if (i.first == tmp) {
                 m_nextIcbChoice->SetSelection(m_nextIcbChoice->GetCount() - 1);
             }
         }
+
+        // Construct VCF choice list
         m_vcfChoice->Clear();
+        for(size_t i = 0; i < numIcb; ++i) {
+            wxString name;
+            name << uint16_t(i);
+            m_vcfChoice->Append(name);
+        }
+
         m_amplChoice->Clear();
         m_freqChoice->Clear();
         m_waveChoice->Clear();

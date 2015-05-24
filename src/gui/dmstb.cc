@@ -68,6 +68,7 @@ bool DmsTb::OnInit()
 
     MainFrame* frame = new MainFrame(NULL);
     frame->Show(true);
+    frame->applyConfiguration();
     return true;
 }
 

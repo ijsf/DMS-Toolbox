@@ -38,6 +38,7 @@
 #pragma once
 
 #include <gui/gui.hh>
+#include <wx/config.h>
 #include <map>
 #include <string>
 
@@ -72,6 +73,21 @@ class MainFrame : public MainFrameBase {
           @param[in]    parent      Parent window this frame belongs to
          */
         MainFrame(wxWindow* parent);
+
+        /**
+          Destroy main frame.
+
+          Destroys the main frame and all instrument stores.
+         */
+        virtual ~MainFrame();
+
+        /**
+          Apply configuration.
+
+          Reads the configuration and applies the stored data. Might show some error message in case files or MIDI
+          interfaces are not found.
+         */
+        void applyConfiguration();
 
     protected:
         /**
@@ -127,6 +143,8 @@ class MainFrame : public MainFrameBase {
                 uint8_t                 m_icb;      ///< ICB number of 0 if store root
         };
 
+        wxConfig        m_config;           ///< Application configuration
+
         InstPanel*      m_instPanel;        ///< Instrument panel
         EnvelopePanel*  m_envelopePanel;    ///< Envelope panel
         WavePanel*      m_wavePanel;        ///< Wave panel
@@ -136,6 +154,17 @@ class MainFrame : public MainFrameBase {
 
         /// Instrument stores, mapped to tree item IDs
         std::map<wxTreeItemId, Wersi::InstrumentStore*>    m_instrumentStores;
+
+        /**
+          Read cartridge file and create instrument store from it.
+
+          Reads a cartridge file and creates an instrument store from it. The instrument store is automatically
+          appended to the cartridges tree.
+
+          @param[in]    filePath    Full path to the cartridge image file
+          @param[in]    cartName    Name of cartridge as displayed in the cartridge tree
+         */
+        void readCartridgeFile(const wxString& filePath, const wxString& cartName);
 };
 
 } // namespace Gui
