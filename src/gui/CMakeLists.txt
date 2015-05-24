@@ -26,7 +26,7 @@ file(COPY
 
 add_custom_command(
 	OUTPUT generated.cpp
-	DEPENDS DMS-Toolbox.fbp
+	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/DMS-Toolbox.fbp
 	COMMAND wxformbuilder -g DMS-Toolbox.fbp
 )
 
