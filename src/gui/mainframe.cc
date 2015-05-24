@@ -74,7 +74,6 @@ MainFrame::MainFrame(wxWindow* parent)
     m_mainTabs->Fit();
 
     // Expand some trees
-    m_instTree->Expand(m_root);
     m_instTree->Expand(m_devices);
     m_instTree->Expand(m_cartridges);
 
