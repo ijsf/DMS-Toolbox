@@ -44,8 +44,11 @@
 #include <wersi/dx10cartridge.hh>
 #include <wersi/icb.hh>
 
-#include <fstream>
-using namespace std;
+#include <wx/filedlg.h>
+#include <wx/file.h>
+#include <wx/filename.h>
+#include <wx/wfstream.h>
+#include <wx/msgdlg.h>
 
 using namespace DMSToolbox::Wersi;
 
@@ -67,12 +70,6 @@ MainFrame::MainFrame(wxWindow* parent)
     m_mainTabs->AddPage(m_envelopePanel, _("Envelopes"), false);
     m_mainTabs->AddPage(m_wavePanel, _("Waves"), false);
     m_mainTabs->Fit();
-
-    // TODO dummy data
-    m_instTree->AppendItem(m_devices, wxT("MIDI 1 / MK1 / Bank 1"));
-    addCartridge("630813_J_ROM1_MK1.bin", "MK1 ROM1");
-    addCartridge("4201073_630822_U_LAMBADA_DX5.bin", "DX5 Lambada");
-    addCartridge("4201013_ROM1_DX10V2.bin", "DX10V2 ROM1");
 
     // Expand some trees
     m_instTree->Expand(m_root);
@@ -105,64 +102,82 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
     }
 }
 
-// TODO temporary - add cartridge from file
-void MainFrame::addCartridge(const std::string& fileName, const std::string& cartName)
+// Handle file/open menu item
+void MainFrame::onFileOpen(wxCommandEvent& /*event*/)
 {
-    string path("/home/michael/Documents/NoBackup/EPROMs/Wersi/Cartridges/");
-    path.append(fileName);
-    ifstream f(path, ios::binary);
-    if (f) {
-        f.seekg(0, ios::end);
-        size_t size = f.tellg();
-        f.seekg(0, ios::beg);
-        if (size == 16384) {
-            char* buffer(nullptr);
-            InstrumentStore* store(nullptr);
-            try {
-                buffer = new char[size];
-                f.read(buffer, size);
-                if (f.gcount() != 16384) {
-                    throw DataFormatException("Could not read cartridge data");
-                }
-                if (store == nullptr) {
-                    try {
-                        store = new Mk1Cartridge(buffer);
-                    }
-                    catch (DataFormatException&) {
-                        // Ignore data format errors, try next type
-                    }
-                }
-                if (store == nullptr) {
-                    try {
-                        store = new Dx10Cartridge(buffer, size);
-                    }
-                    catch (DataFormatException&) {
-                        // Ignore data format errors, try next type
-                    }
-                }
-                if (store == nullptr) {
-                    throw DataFormatException("Unknown cartridge format");
-                }
+    // Create file dialog to open file
+    wxFileDialog dlg(this, _("Select cartridge file to load"), wxEmptyString, wxEmptyString, wxT("*.*"), wxFD_OPEN);
+    if (dlg.ShowModal() == wxID_CANCEL) {
+        return;
+    }
 
-                auto id = m_instTree->AppendItem(m_cartridges, wxString::From8BitData(cartName.c_str()),
-                                                 -1, -1, new InstrumentHelper(store, 0));
-                for (auto& i : *store) {
-                    Icb& icb = i.second;
-                    m_instTree->AppendItem(id, wxString::From8BitData(icb.getName().c_str()),
-                                           -1, -1, new InstrumentHelper(store, i.first));
+    // Open and check file
+    wxFile file(dlg.GetPath(), wxFile::read);
+    wxFileOffset size = file.Length();
+    wxFileInputStream fileStream(file);
+    if (fileStream.IsOk()) {
+        char* buffer(nullptr);
+        InstrumentStore* store(nullptr);
+        try {
+            if (size != 8192 && size != 16384) {
+                throw DataFormatException("Invalid file size (must be 8 or 16 KB)");
+            }
+            buffer = new char[size];
+            fileStream.Read(buffer, size);
+            if (fileStream.LastRead() != size_t(size)) {
+                throw DataFormatException("Could not read whole cartridge data");
+            }
+            if (store == nullptr) {
+                try {
+                    store = new Mk1Cartridge(buffer);
+                }
+                catch (DataFormatException&) {
+                    // Ignore data format errors, try next type
                 }
             }
-            catch (Exception&) {
-                if (store != nullptr) {
-                    delete store;
+            if (store == nullptr) {
+                try {
+                    store = new Dx10Cartridge(buffer, size);
                 }
-                if (buffer != nullptr) {
-                    delete[] buffer;
+                catch (DataFormatException&) {
+                    // Ignore data format errors, try next type
                 }
-                // Ignore errors - cartridge not set
+            }
+            if (store == nullptr) {
+                throw DataFormatException("Unknown cartridge format");
+            }
+
+            wxFileName fn(dlg.GetPath());
+            auto id = m_instTree->AppendItem(m_cartridges, fn.GetFullName(),
+                                             -1, -1, new InstrumentHelper(store, 0));
+            for (auto& i : *store) {
+                Icb& icb = i.second;
+                m_instTree->AppendItem(id, wxString::From8BitData(icb.getName().c_str()),
+                                       -1, -1, new InstrumentHelper(store, i.first));
             }
         }
+        catch (Exception& e) {
+            if (store != nullptr) {
+                delete store;
+            }
+            if (buffer != nullptr) {
+                delete[] buffer;
+            }
+            wxMessageDialog err(this, wxString::FromUTF8(e.what()), _("Could not load cartridge"),
+                                wxOK | wxCENTRE | wxICON_ERROR);
+            err.ShowModal();
+        }
     }
+    else {
+        wxMessageDialog err(this, _("File has invalid size"), _("Could not load cartridge"),
+                            wxOK | wxCENTRE | wxICON_ERROR);
+        err.ShowModal();
+    }
+}
+
+// Handle edit/rename menu item
+void MainFrame::onEditRename(wxCommandEvent& /*event*/)
+{
 }
 
 } // namespace Gui

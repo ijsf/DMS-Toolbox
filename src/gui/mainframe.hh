@@ -83,6 +83,24 @@ class MainFrame : public MainFrameBase {
          */
         virtual void onInstSelect(wxTreeEvent& event);
 
+        /**
+          File/open menu event handler.
+
+          Handles the file/open menu item.
+
+          @param[in]    event       Menu item command event
+         */
+        virtual void onFileOpen(wxCommandEvent& event);
+
+        /**
+          Edit/rename menu event handler.
+
+          Handles the edit/rename menu item.
+
+          @param[in]    event       Menu item command event
+         */
+        virtual void onEditRename(wxCommandEvent& event);
+
     private:
         /// Helper class to store instrument data with choice
         class InstrumentHelper : public wxTreeItemData {
@@ -118,9 +136,6 @@ class MainFrame : public MainFrameBase {
 
         /// Instrument stores, mapped to tree item IDs
         std::map<wxTreeItemId, Wersi::InstrumentStore*>    m_instrumentStores;
-
-        /// TODO temporary
-        void addCartridge(const std::string& fileName, const std::string& cartName);
 };
 
 } // namespace Gui
