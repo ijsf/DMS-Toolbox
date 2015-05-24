@@ -9,6 +9,7 @@ set(SOURCES
 	instrumentstore.cc
 	mk1cartridge.cc
 	dx10cartridge.cc
+	sysex.cc
 )
 
 set(HEADERS
@@ -19,6 +20,7 @@ set(HEADERS
 	instrumentstore.hh
 	mk1cartridge.hh
 	dx10cartridge.hh
+	sysex.hh
 )
 
 add_library(wersi OBJECT ${SOURCES})
