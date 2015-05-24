@@ -37,62 +37,9 @@
 
 #pragma once
 
-#include <gui/gui.hh>
-
-namespace DMSToolbox {
-
-namespace Wersi {
-// Forward declarations
-class Wave;
-} // namespace Wersi
-
-namespace Gui {
-
-/**
-  @ingroup gui_group
-
-  Wave panel implementation.
-
-  This class implements the wave panel allowing viewing and editing WAVE blocks.
- */
-class WavePanel : public WavePanelBase {
-    public:
-        /**
-          Create wave panel.
-
-          Creates the wave panel allowing viewing and editing WAVE blocks.
-
-          @param[in]    parent      Parent window this panel belongs to
-         */
-        WavePanel(wxWindow* parent);
-
-        /**
-          Set wave data to edit.
-
-          Sets the wave data to edit, updating all fields and associating the wave data with the panel to apply changes
-          in the GUI to it.
-
-          @param[in]    wave        Wave data
-         */
-        void setWave(Wersi::Wave* wave);
-
-    private:
-        wxPanel*        m_bassPanel;    ///< Bass wave drawing panel
-        wxPanel*        m_tenorPanel;   ///< Bass wave drawing panel
-        wxPanel*        m_altoPanel;    ///< Bass wave drawing panel
-        wxPanel*        m_sopranoPanel; ///< Bass wave drawing panel
-
-        Wersi::Wave*    m_wave;         ///< Wave data being edited
-
-        /**
-          Handle paint event.
-
-          Handles a paint event and redraws a wave.
-
-          @param[in]    event       wxWidgets paint event
-         */
-        void onPaint(wxPaintEvent& event);
-};
-
-} // namespage Gui
-} // namespace DMSToolbox
+#include <common.hh>
+#ifdef WIN32
+// TODO suppress warnings in wxWidgets header files
+#pragma warning ( disable : 4996 )
+#include <gui/generated.h>
+#endif // WIN32

@@ -37,8 +37,7 @@
 
 #pragma once
 
-#include <common.hh>
-#include <gui/generated.h>
+#include <gui/gui.hh>
 #include <map>
 #include <string>
 

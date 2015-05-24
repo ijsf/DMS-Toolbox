@@ -128,7 +128,7 @@ void MainFrame::addCartridge(const std::string& fileName, const std::string& car
                     try {
                         store = new Mk1Cartridge(buffer);
                     }
-                    catch (DataFormatException& e) {
+                    catch (DataFormatException&) {
                         // Ignore data format errors, try next type
                     }
                 }
@@ -136,7 +136,7 @@ void MainFrame::addCartridge(const std::string& fileName, const std::string& car
                     try {
                         store = new Dx10Cartridge(buffer, size);
                     }
-                    catch (DataFormatException& e) {
+                    catch (DataFormatException&) {
                         // Ignore data format errors, try next type
                     }
                 }
@@ -152,7 +152,7 @@ void MainFrame::addCartridge(const std::string& fileName, const std::string& car
                                            -1, -1, new InstrumentHelper(store, i.first));
                 }
             }
-            catch (Exception& e) {
+            catch (Exception&) {
                 if (store != nullptr) {
                     delete store;
                 }

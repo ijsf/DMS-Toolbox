@@ -12,6 +12,7 @@ set(SOURCES
 
 set(HEADERS
 	generated.h
+	gui.hh
 	mainframe.hh
 	instpanel.hh
 	envelopepanel.hh
@@ -43,7 +44,9 @@ add_executable(dmstb ${SOURCES}
 )
 endif()
 # TODO need this due to generated code not being so ultra-clean
-target_compile_options(dmstb PRIVATE -Wno-effc++)
+if(CMAKE_COMPILER_IS_GNUCXX)
+    target_compile_options(dmstb PRIVATE -Wno-effc++)
+endif()
 
 target_link_libraries(dmstb ${wxWidgets_LIBRARIES})
 install(TARGETS dmstb

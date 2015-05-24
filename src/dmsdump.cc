@@ -63,7 +63,7 @@ int main(int argc, char** argv)
         return 2;
     }
     f.seekg(0, ios::end);
-    size_t size = f.tellg();
+    size_t size = size_t(f.tellg());
     f.seekg(0, ios::beg);
     if (size > 1024 * 1024) {
         cerr << "Input file too large" << endl;
