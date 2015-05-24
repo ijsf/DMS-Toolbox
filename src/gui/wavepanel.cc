@@ -118,12 +118,13 @@ void WavePanel::onPaint(wxPaintEvent& event)
         wxPaintDC dc(target);
         dc.Clear();
         if (source != nullptr) {
-            std::unique_ptr<wxPoint[]> points(new wxPoint[size]);
+            std::unique_ptr<wxPoint[]> points(new wxPoint[size + 1]);
             size_t factor = 512 / size;
             for (size_t i = 0; i < size; ++i) {
                 points[i] = wxPoint(i * factor, source[i]);
             }
-            dc.DrawSpline(size, points.get());
+            points[size] = wxPoint(size * factor, source[0]);
+            dc.DrawSpline(size + 1, points.get());
         }
     }
 }
