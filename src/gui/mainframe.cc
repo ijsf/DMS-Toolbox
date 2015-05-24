@@ -73,10 +73,6 @@ MainFrame::MainFrame(wxWindow* parent)
     m_mainTabs->AddPage(m_wavePanel, _("Waves"), false);
     m_mainTabs->Fit();
 
-    // Expand some trees
-    m_instTree->Expand(m_devices);
-    m_instTree->Expand(m_cartridges);
-
     // Do the window layout
     Fit();
 }
@@ -113,6 +109,10 @@ void MainFrame::applyConfiguration()
         }
         cont = m_config.GetNextEntry(name, index);
     }
+
+    // Expand top level trees
+    m_instTree->Expand(m_devices);
+    m_instTree->Expand(m_cartridges);
 }
 
 // Handle instrument deletion
