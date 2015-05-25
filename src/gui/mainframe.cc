@@ -55,9 +55,6 @@
 
 #ifdef HAVE_RTMIDI
 #include <RtMidi.h>
-#ifndef RtMidiError
-#define RtMidiError RtError
-#endif // RtMidiError
 #endif // HAVE_RTMIDI
 
 #include <iostream>
@@ -81,8 +78,10 @@ MainFrame::MainFrame(wxWindow* parent)
     , m_devices(m_instTree->AppendItem(m_root, _("Devices")))
     , m_cartridges(m_instTree->AppendItem(m_root, _("Cartridges")))
     , m_dragStore(nullptr)
+#ifdef HAVE_RTMIDI
     , m_midiIn(nullptr)
     , m_midiOut(nullptr)
+#endif // HAVE_RTMIDI
     , m_midiInPorts()
     , m_midiOutPorts()
 {
@@ -572,9 +571,9 @@ void MainFrame::addDevice()
 }
 
 // Read MIDI device
+#ifdef HAVE_RTMIDI
 void MainFrame::readDevice(const InstStore& store)
 {
-#ifdef HAVE_RTMIDI
     m_midiIn->openPort(store.m_inPort);
     m_midiIn->ignoreTypes(false, true, true);
     m_midiOut->openPort(store.m_outPort);
@@ -631,13 +630,11 @@ void MainFrame::readDevice(const InstStore& store)
     delete[] buf;
     m_midiOut->closePort();
     m_midiIn->closePort();
-#endif // HAVE_RTMIDI
 }
 
 // Write MIDI device
 void MainFrame::writeDevice(const InstStore& store)
 {
-#ifdef HAVE_RTMIDI
     m_midiOut->openPort(store.m_outPort);
     uint8_t offset = 0;
 
@@ -695,8 +692,15 @@ void MainFrame::writeDevice(const InstStore& store)
     }
 
     m_midiOut->closePort();
-#endif // HAVE_RTMIDI
 }
+#else // HAVE_RTMIDI
+void MainFrame::readDevice(const InstStore& /*store*/)
+{
+}
+void MainFrame::writeDevice(const InstStore& /*store*/)
+{
+}
+#endif // HAVE_RTMIDI
 
 } // namespace Gui
 } // namespace DMSToolbox

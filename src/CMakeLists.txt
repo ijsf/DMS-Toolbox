@@ -8,7 +8,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -Weffc++ -std=c++0x -pedantic")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework CoreMIDI -framework CoreFoundation -framework CoreAudio -lrtmidi")
 endif()
 include_directories("${PROJECT_SOURCE_DIR}/src")
 

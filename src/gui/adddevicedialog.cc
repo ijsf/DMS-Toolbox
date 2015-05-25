@@ -68,14 +68,12 @@ AddDeviceDialog::AddDeviceDialog(MainFrame* parent)
     // Fill MIDI port choices
     m_inPortChoice->Clear();
     for (auto& i : parent->getMidiInPorts()) {
-        auto ph = new PortHelper(i.first);
-        m_inPortChoice->Append(i.second, ph);
+        m_inPortChoice->Append(i.second, new PortHelper(i.first));
     }
     m_inPortChoice->SetSelection(0);
     m_outPortChoice->Clear();
     for (auto& i : parent->getMidiOutPorts()) {
-        auto ph = new PortHelper(i.first);
-        m_outPortChoice->Append(i.second, ph);
+        m_outPortChoice->Append(i.second, new PortHelper(i.first));
     }
     m_outPortChoice->SetSelection(0);
 
@@ -101,7 +99,7 @@ unsigned int AddDeviceDialog::getInPort() const
 {
     int sel = m_inPortChoice->GetSelection();
     if (sel != wxNOT_FOUND) {
-        auto cd = static_cast<PortHelper*>(m_inPortChoice->GetClientData(sel));
+        auto cd = static_cast<PortHelper*>(m_inPortChoice->GetClientObject(sel));
         if (cd != nullptr) {
             return cd->getIndex();
         }
@@ -114,7 +112,7 @@ unsigned int AddDeviceDialog::getOutPort() const
 {
     int sel = m_outPortChoice->GetSelection();
     if (sel != wxNOT_FOUND) {
-        auto cd = static_cast<PortHelper*>(m_outPortChoice->GetClientData(sel));
+        auto cd = static_cast<PortHelper*>(m_outPortChoice->GetClientObject(sel));
         if (cd != nullptr) {
             return cd->getIndex();
         }
