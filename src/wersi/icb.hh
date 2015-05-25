@@ -104,6 +104,16 @@ class Icb {
         Icb& operator=(const Icb& source);
 
         /**
+          Copy ICB data.
+
+          Copies all members except the block number and buffer from source object. This is intended to duplicate
+          the ICB's contents to another existing ICB.
+
+          @param[in]    source      Source object to copy from
+         */
+        void copy(const Icb& source);
+
+        /**
           Dissect ICB raw data buffer.
 
           Parses the raw ICB data buffer and updates object members.
@@ -129,6 +139,17 @@ class Icb {
         }
 
         /**
+          Set next ICB.
+
+          Sets the next ICB value for layered voices or 0 if no next ICB is available.
+
+          @param[in]    icb         Next ICB number
+         */
+        void setNextIcb(uint8_t icb) {
+            m_nextIcb = icb;
+        }
+
+        /**
           Get VCF block.
 
           Returns the VCF block number.
@@ -137,6 +158,17 @@ class Icb {
          */
         uint8_t getVcfBlock() const {
             return m_vcfBlock;
+        }
+
+        /**
+          Set VCF block.
+
+          Sets the VCF block number.
+
+          @param[in]    vcf         VCF block number
+         */
+        void setVcfBlock(uint8_t vcf) {
+            m_vcfBlock = vcf;
         }
 
         /**
@@ -151,6 +183,17 @@ class Icb {
         }
 
         /**
+          Set AMPL block.
+
+          Sets the AMPL block number.
+
+          @param[in]    ampl        AMPL block number
+         */
+        void setAmplBlock(uint8_t ampl) {
+            m_amplBlock = ampl;
+        }
+
+        /**
           Get FREQ block.
 
           Returns the FREQ block number.
@@ -162,6 +205,17 @@ class Icb {
         }
 
         /**
+          Set FREQ block.
+
+          Sets the FREQ block number.
+
+          @param[in]    freq        FREQ block number
+         */
+        void setFreqBlock(uint8_t freq) {
+            m_freqBlock = freq;
+        }
+
+        /**
           Get WAVE block.
 
           Returns the WAVE block number.
@@ -170,6 +224,17 @@ class Icb {
          */
         uint8_t getWaveBlock() const {
             return m_waveBlock;
+        }
+
+        /**
+          Set WAVE block.
+
+          Sets the WAVE block number.
+
+          @param[in]    wave        WAVE block number
+         */
+        void setWaveBlock(uint8_t wave) {
+            m_waveBlock = wave;
         }
 
         /**
@@ -355,7 +420,7 @@ class Icb {
 
           @return                   Unknown bits
          */
-        uint16_t getUnknownBits() const {
+        uint8_t getUnknownBits() const {
             return m_unknownBits;
         }
 

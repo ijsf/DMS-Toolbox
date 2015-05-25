@@ -35,72 +35,60 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
-#include <wersi/dx10cartridge.hh>
+#include <wersi/dx10device.hh>
 #include <wersi/icb.hh>
 #include <wersi/vcf.hh>
 #include <wersi/envelope.hh>
 #include <wersi/wave.hh>
 #include <exceptions.hh>
+#include <cstring>
 
 namespace DMSToolbox {
 namespace Wersi {
 
-// Create new DX10/DX5 cartridge object
-Dx10Cartridge::Dx10Cartridge(void* buffer, size_t size, bool /*initialize*/)
+// Create new DX10/EX10R device object
+Dx10Device::Dx10Device(void* buffer, size_t size)
     : InstrumentStore(buffer, size)
 {
+    // Initialize ICBs
+    memset(buffer, 0, size);
+    auto ptr = static_cast<uint8_t*>(buffer);
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        ptr[1] = i + 65;    // VCF
+        ptr[2] = addr;      // AMPL
+        ptr[3] = addr;      // FREQ
+        ptr[4] = addr;      // WAVE
+        ptr[10] = ' ';
+        ptr[11] = ' ';
+        ptr[12] = ' ';
+        ptr[13] = ' ';
+        ptr[14] = ' ';
+        ptr[15] = ' ';
+        ptr += 16;
+    }
+
     dissect();
 }
 
 // Destroy DX10/DX5 cartridge object
-Dx10Cartridge::~Dx10Cartridge()
+Dx10Device::~Dx10Device()
 {
 }
 
 // Dissect raw DX10/DX5 cartridge data
-void Dx10Cartridge::dissect()
+void Dx10Device::dissect()
 {
     clearLists();
 
     try {
-        // Check size
-        if (m_size != 8192 && m_size != 16384) {
-            throw DataFormatException("invalid raw data size");
-        }
-
-        // Verify presets/instruments checksum
-        uint16_t check = 0x3131;
-        for (size_t i = 0; i < 0x0f64; ++i) {
-            check += m_buffer[i];
-        }
-        uint16_t dummy = (m_buffer[0x0f64] << 8) | m_buffer[0x0f65];
-        dummy += check;
-        if (dummy != 0) {
-            throw DataFormatException("checksum verification for presets/instruments failed");
-        }
-
-        // Verify rhythms/sequences checksum
-        if (m_size > 8192) {
-            check = 0;
-            for (size_t i = 0x2000; i < 0x3ffe; ++i) {
-                check += m_buffer[i];
-            }
-            dummy = (m_buffer[0x3ffe] << 8) | m_buffer[0x3fff];
-            dummy += check;
-            if (dummy != 0) {
-                throw DataFormatException("checksum verification for rhythms/sequences failed");
-            }
-        }
-
-        // Skip presets
-        size_t idx = 0;
-        for (size_t i = 0; i < 8; ++i) {
-            idx += 250;
-        }
-
         // Extract ICBs
+        size_t idx = 0;
         for (size_t i = 0; i < 20; ++i) {
-            uint8_t addr = i + 194;
+            uint8_t addr = i + 66;
             if (i >= 10) {
                 ++addr;
             }
@@ -111,7 +99,7 @@ void Dx10Cartridge::dissect()
 
         // Extract VCFs
         for (size_t i = 0; i < 10; ++i) {
-            uint8_t addr = i + 193;
+            uint8_t addr = i + 65;
             Vcf vcf(addr, &(m_buffer[idx]));
             m_vcf.insert(std::pair<uint8_t, Vcf>(addr, vcf));
             idx += 10;
@@ -119,7 +107,7 @@ void Dx10Cartridge::dissect()
 
         // Extract AMPLs
         for (size_t i = 0; i < 20; ++i) {
-            uint8_t addr = i + 193;
+            uint8_t addr = i + 65;
             if (i >= 10) {
                 ++addr;
             }
@@ -130,7 +118,7 @@ void Dx10Cartridge::dissect()
 
         // Extract FREQs
         for (size_t i = 0; i < 20; ++i) {
-            uint8_t addr = i + 193;
+            uint8_t addr = i + 65;
             if (i >= 10) {
                 ++addr;
             }
@@ -139,15 +127,9 @@ void Dx10Cartridge::dissect()
             idx += 32;
         }
 
-        // Check pointer correctness and skip checksum
-        if (idx != 0x0f64) {
-            throw DataFormatException("something went wrong extracting ICB, VCF, AMPL and FREQ");
-        }
-        idx += 2;
-
         // Extract WAVEs
         for (size_t i = 0; i < 20; ++i) {
-            uint8_t addr = i + 193;
+            uint8_t addr = i + 65;
             if (i >= 10) {
                 ++addr;
             }
@@ -155,21 +137,16 @@ void Dx10Cartridge::dissect()
             m_wave.insert(std::pair<uint8_t, Wave>(addr, wave));
             idx += 212;
         }
-
-        // Check pointer correctness
-        if (idx != 0x1ff6) {
-            throw DataFormatException("something went wrong extracting WAVE");
-        }
     }
     catch (DataFormatException& e) {
-        DataFormatException exc("Invalid DX10/DX5 cartridge, ");
+        DataFormatException exc("Invalid DX10/EX10R buffer, ");
         exc << e.what();
         throw e;
     }
 }
 
 // Put together and update DX10/DX5 cartridge raw data
-void Dx10Cartridge::update()
+void Dx10Device::update()
 {
 }
 

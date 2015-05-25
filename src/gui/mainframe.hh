@@ -155,6 +155,24 @@ class MainFrame : public MainFrameBase {
         virtual void onInstSelect(wxTreeEvent& event);
 
         /**
+          Begin drag event handler.
+
+          Handles the begin drag event.
+
+          @param[in]    event       Event for begin drag
+         */
+        virtual void onInstBeginDrag(wxTreeEvent& event);
+
+        /**
+          End drag event handler.
+
+          Handles the end drag event.
+
+          @param[in]    event       Event for end drag
+         */
+        virtual void onInstEndDrag(wxTreeEvent& event);
+
+        /**
           File/open menu event handler.
 
           Handles the file/open menu item.
@@ -218,6 +236,9 @@ class MainFrame : public MainFrameBase {
 
         /// Instrument stores, mapped to names
         std::map<wxString, InstStore>       m_instrumentStores;
+
+        /// Source storage on drag&drop copy action
+        Wersi::InstrumentStore* m_dragStore;
 
 #ifdef HAVE_RTMIDI
         RtMidiIn*       m_midiIn;           ///< MIDI input object

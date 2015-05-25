@@ -107,30 +107,35 @@ Vcf& Vcf::operator=(const Vcf& source)
     if (this != &source) {
         m_blockNum      = source.m_blockNum;
         m_buffer        = source.m_buffer;
-
-        m_left          = source.m_left;
-        m_right         = source.m_right;
-        m_lowPass       = source.m_lowPass;
-        m_fourPoles     = source.m_fourPoles;
-        m_wv            = source.m_wv;
-        m_noise         = source.m_noise;
-        m_distortion    = source.m_distortion;
-        m_frequency     = source.m_frequency;
-        m_quality       = source.m_quality;
-        m_noiseType     = source.m_noiseType;
-        m_retrigger     = source.m_retrigger;
-        m_envMode       = source.m_envMode;
-        m_tracking      = source.m_tracking;
-        m_t1Time        = source.m_t1Time;
-        m_t2Time        = source.m_t2Time;
-        m_t1Intensity   = source.m_t1Intensity;
-        m_t1Offset      = source.m_t1Offset;
-        m_t2Intensity   = source.m_t2Intensity;
-        m_t2Offset      = source.m_t2Offset;
-
-        m_unknownBits   = source.m_unknownBits;
+        copy(source);
     }
     return *this;
+}
+
+// Copy ICB object data
+void Vcf::copy(const Vcf& source)
+{
+    m_left          = source.m_left;
+    m_right         = source.m_right;
+    m_lowPass       = source.m_lowPass;
+    m_fourPoles     = source.m_fourPoles;
+    m_wv            = source.m_wv;
+    m_noise         = source.m_noise;
+    m_distortion    = source.m_distortion;
+    m_frequency     = source.m_frequency;
+    m_quality       = source.m_quality;
+    m_noiseType     = source.m_noiseType;
+    m_retrigger     = source.m_retrigger;
+    m_envMode       = source.m_envMode;
+    m_tracking      = source.m_tracking;
+    m_t1Time        = source.m_t1Time;
+    m_t2Time        = source.m_t2Time;
+    m_t1Intensity   = source.m_t1Intensity;
+    m_t1Offset      = source.m_t1Offset;
+    m_t2Intensity   = source.m_t2Intensity;
+    m_t2Offset      = source.m_t2Offset;
+
+    m_unknownBits   = source.m_unknownBits;
 }
 
 // Dissect VCF raw data
@@ -164,6 +169,25 @@ void Vcf::dissect()
 // Put together and update VCF raw data
 void Vcf::update()
 {
+    m_buffer[0] = (m_left       ? 0x01 : 0x00) |
+                  (m_right      ? 0x02 : 0x00) |
+                  (m_lowPass    ? 0x04 : 0x00) |
+                  (m_fourPoles  ? 0x08 : 0x00) |
+                  (m_wv         ? 0x10 : 0x00) |
+                  (m_noise      ? 0x20 : 0x00) |
+                  (m_distortion ? 0x40 : 0x00);
+    m_buffer[1] = uint8_t(m_frequency);
+    m_buffer[2] = m_quality;
+    m_buffer[3] = ((static_cast<uint8_t>(m_noiseType) & 3) << 2) |
+                  (m_retrigger  ? 0x10 : 0x00) |
+                  ((static_cast<uint8_t>(m_envMode) & 3) << 5) |
+                  (m_lowPass    ? 0x80 : 0x00);
+    m_buffer[4] = m_t1Time;
+    m_buffer[5] = m_t2Time;
+    m_buffer[6] = uint8_t(m_t1Intensity);
+    m_buffer[7] = uint8_t(m_t1Offset);
+    m_buffer[8] = uint8_t(m_t2Intensity);
+    m_buffer[9] = uint8_t(m_t2Offset);
 }
 
 // Return noise type name

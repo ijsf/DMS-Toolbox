@@ -97,6 +97,17 @@ class Envelope {
         Envelope& operator=(const Envelope& source);
 
         /**
+          Copy envelope data.
+
+          Copies all members except the block number and buffer from source object. This is intended to duplicate
+          the envelope's contents to another existing envelope. Both envelopes need to be of the same type due to
+          different sizes between the types.
+
+          @param[in]    source      Source object to copy from
+         */
+        void copy(const Envelope& source);
+
+        /**
           Dissect envelope raw data buffer.
 
           Parses the raw envelope data buffer and updates object members.

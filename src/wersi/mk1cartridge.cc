@@ -62,6 +62,8 @@ Mk1Cartridge::~Mk1Cartridge()
 // Dissect raw MK1 cartridge data
 void Mk1Cartridge::dissect()
 {
+    clearLists();
+
     try {
         // Check header bytes
         uint16_t dummy = (m_buffer[0] << 8) | m_buffer[1];

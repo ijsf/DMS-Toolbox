@@ -89,17 +89,57 @@ Wave& Wave::operator=(const Wave& source)
         m_blockNum      = source.m_blockNum;
         m_buffer        = source.m_buffer;
         m_size          = source.m_size;
-
-        m_fixedFormants = source.m_fixedFormants;
-        m_level         = source.m_level;
-
-        memcpy(m_bassWave,    source.m_bassWave,    sizeof(m_bassWave));
-        memcpy(m_tenorWave,   source.m_tenorWave,   sizeof(m_tenorWave));
-        memcpy(m_altoWave,    source.m_altoWave,    sizeof(m_altoWave));
-        memcpy(m_sopranoWave, source.m_sopranoWave, sizeof(m_sopranoWave));
-        memcpy(m_fixFormData, source.m_fixFormData, sizeof(m_fixFormData));
+        copy(source);
     }
     return *this;
+}
+
+// Copy wave object data
+void Wave::copy(const Wave& source)
+{
+    m_fixedFormants = source.m_fixedFormants;
+    m_level         = source.m_level;
+
+    if (m_size > 64) {
+        if (source.m_size > 64) {
+            memcpy(m_bassWave,    source.m_bassWave,    sizeof(m_bassWave));
+        }
+        else {
+            memset(m_bassWave,    0,                    sizeof(m_bassWave));
+        }
+    }
+    if (m_size > 128) {
+        if (source.m_size > 128) {
+            memcpy(m_tenorWave,   source.m_tenorWave,   sizeof(m_tenorWave));
+        }
+        else {
+            memset(m_tenorWave,   0,                    sizeof(m_tenorWave));
+        }
+    }
+    if (m_size > 160) {
+        if (source.m_size > 160) {
+            memcpy(m_altoWave,    source.m_altoWave,    sizeof(m_altoWave));
+        }
+        else {
+            memset(m_altoWave,    0,                    sizeof(m_altoWave));
+        }
+    }
+    if (m_size > 176) {
+        if (source.m_size > 176) {
+            memcpy(m_sopranoWave, source.m_sopranoWave, sizeof(m_sopranoWave));
+        }
+        else {
+            memset(m_sopranoWave, 0,                    sizeof(m_sopranoWave));
+        }
+    }
+    if (m_size > 211) {
+        if (source.m_size > 211) {
+            memcpy(m_fixFormData, source.m_fixFormData, sizeof(m_fixFormData));
+        }
+        else {
+            memset(m_fixFormData, 0,                    sizeof(m_fixFormData));
+        }
+    }
 }
 
 // Dissect raw wave data
@@ -147,6 +187,26 @@ void Wave::dissect()
 // Put together and update wave raw data
 void Wave::update()
 {
+    m_buffer[0] = (m_level & 0x7f) | (m_fixedFormants ? 0x80 : 0x00);
+    if (m_size > 64) {
+        memcpy(&(m_buffer[1]), m_bassWave, sizeof(m_bassWave));
+    }
+
+    if (m_size > 128) {
+        memcpy(&(m_buffer[65]), m_tenorWave, sizeof(m_tenorWave));
+    }
+
+    if (m_size > 160) {
+        memcpy(&(m_buffer[129]), m_altoWave, sizeof(m_altoWave));
+    }
+
+    if (m_size > 176) {
+        memcpy(&(m_buffer[161]), m_sopranoWave, sizeof(m_sopranoWave));
+    }
+
+    if (m_size > 211) {
+        memcpy(&(m_buffer[177]), m_fixFormData, sizeof(m_fixFormData));
+    }
 }
 
 } // namespace Wersi

@@ -111,32 +111,37 @@ Icb& Icb::operator=(const Icb& source)
     if (this != &source) {
         m_blockNum      = source.m_blockNum;
         m_buffer        = source.m_buffer;
-
-        m_nextIcb       = source.m_nextIcb;
-        m_vcfBlock      = source.m_vcfBlock;
-        m_amplBlock     = source.m_amplBlock;
-        m_freqBlock     = source.m_freqBlock;
-        m_waveBlock     = source.m_waveBlock;
-        m_dynamics      = source.m_dynamics;
-        m_lowSelect     = source.m_lowSelect;
-        m_highSelect    = source.m_highSelect;
-        m_left          = source.m_left;
-        m_right         = source.m_right;
-        m_bright        = source.m_bright;
-        m_vcf           = source.m_vcf;
-        m_wv            = source.m_wv;
-        m_transpose     = source.m_transpose;
-        m_detune        = source.m_detune;
-        m_wvMode        = source.m_wvMode;
-        m_wvLeft        = source.m_wvLeft;
-        m_wvRight       = source.m_wvRight;
-        m_wvFbFlat      = source.m_wvFbFlat;
-        m_wvFbDeep      = source.m_wvFbDeep;
-        m_name          = source.m_name;
-
-        m_unknownBits   = source.m_unknownBits;
+        copy(source);
     }
     return *this;
+}
+
+// Copy ICB object data
+void Icb::copy(const Icb& source)
+{
+    m_nextIcb       = source.m_nextIcb;
+    m_vcfBlock      = source.m_vcfBlock;
+    m_amplBlock     = source.m_amplBlock;
+    m_freqBlock     = source.m_freqBlock;
+    m_waveBlock     = source.m_waveBlock;
+    m_dynamics      = source.m_dynamics;
+    m_lowSelect     = source.m_lowSelect;
+    m_highSelect    = source.m_highSelect;
+    m_left          = source.m_left;
+    m_right         = source.m_right;
+    m_bright        = source.m_bright;
+    m_vcf           = source.m_vcf;
+    m_wv            = source.m_wv;
+    m_transpose     = source.m_transpose;
+    m_detune        = source.m_detune;
+    m_wvMode        = source.m_wvMode;
+    m_wvLeft        = source.m_wvLeft;
+    m_wvRight       = source.m_wvRight;
+    m_wvFbFlat      = source.m_wvFbFlat;
+    m_wvFbDeep      = source.m_wvFbDeep;
+    m_name          = source.m_name;
+
+    m_unknownBits   = source.m_unknownBits;
 }
 
 // Disssect ICB raw data
@@ -174,6 +179,34 @@ void Icb::dissect()
 // Put together and update ICB raw data
 void Icb::update()
 {
+    m_buffer[0] = m_nextIcb;
+    m_buffer[1] = m_vcfBlock;
+    m_buffer[2] = m_amplBlock;
+    m_buffer[3] = m_freqBlock;
+    m_buffer[4] = m_waveBlock;
+    m_buffer[5] = (m_dynamics   & 3) |
+                  (m_lowSelect  ? 0x04 : 0x00) |
+                  (m_highSelect ? 0x08 : 0x00);
+    m_buffer[6] = (m_left       ? 0x01 : 0x00) |
+                  (m_right      ? 0x02 : 0x00) |
+                  (m_bright     ? 0x04 : 0x00) |
+                  (m_vcf        ? 0x08 : 0x00) |
+                  (m_wv         ? 0x10 : 0x00);
+    m_buffer[7] = uint8_t(m_transpose);
+    m_buffer[8] = uint8_t(m_detune);
+    m_buffer[9] = (static_cast<uint8_t>(m_wvMode) & 7) |
+                  (m_wvLeft     ? 0x08 : 0x00) |
+                  (m_wvRight    ? 0x10 : 0x00) |
+                  (m_wvFbFlat   ? 0x40 : 0x00) |
+                  (m_wvFbDeep   ? 0x80 : 0x00);
+    std::string name(m_name);
+    name.append("      ");
+    m_buffer[10] = name[0];
+    m_buffer[11] = name[1];
+    m_buffer[12] = name[2];
+    m_buffer[13] = name[3];
+    m_buffer[14] = name[4];
+    m_buffer[15] = name[5];
 }
 
 // Return WersiVoice mode name

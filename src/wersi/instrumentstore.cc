@@ -41,8 +41,6 @@
 #include <wersi/envelope.hh>
 #include <wersi/wave.hh>
 
-using namespace std;
-
 namespace DMSToolbox {
 namespace Wersi {
 
@@ -63,14 +61,95 @@ InstrumentStore::~InstrumentStore()
 {
 }
 
+// Copy instrument store contents
+void InstrumentStore::copyContents(const InstrumentStore& source)
+{
+    // Copy ICBs
+    for (auto& i : source) {
+        Icb* icb = getIcb(i.first - 128);
+        if (icb != nullptr) {
+            icb->copy(i.second);
+            if (icb->getNextIcb() != 0) {
+                icb->setNextIcb(icb->getNextIcb() - 128);
+            }
+            icb->setVcfBlock(icb->getVcfBlock() - 128);
+            icb->setAmplBlock(icb->getAmplBlock() - 128);
+            icb->setFreqBlock(icb->getFreqBlock() - 128);
+            icb->setWaveBlock(icb->getWaveBlock() - 128);
+            icb->update();
+        }
+    }
+
+    // Copy VCFs
+    for (size_t i = 0; i < 10; ++i) {
+        uint8_t addr = i + 65;
+        auto src = const_cast<InstrumentStore*>(&source)->getVcf(addr + 128);
+        auto dst = getVcf(addr);
+        if (src != nullptr && dst != nullptr) {
+            dst->copy(*src);
+        }
+    }
+
+    // Copy AMPLs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto src = const_cast<InstrumentStore*>(&source)->getAmpl(addr + 128);
+        auto dst = getAmpl(addr);
+        if (src != nullptr && dst != nullptr) {
+            dst->copy(*src);
+        }
+    }
+
+    // Copy FREQs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto src = const_cast<InstrumentStore*>(&source)->getFreq(addr + 128);
+        auto dst = getFreq(addr);
+        if (src != nullptr && dst != nullptr) {
+            dst->copy(*src);
+        }
+    }
+
+    // Copy WAVEs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto src = const_cast<InstrumentStore*>(&source)->getWave(addr + 128);
+        auto dst = getWave(addr);
+        if (src != nullptr && dst != nullptr) {
+            dst->copy(*src);
+        }
+    }
+}
+
 // Return begin iterator to ICB map
 std::map<uint8_t, Icb>::iterator InstrumentStore::begin()
 {
     return m_icb.begin();
 }
 
+// Return const begin iterator to ICB map
+std::map<uint8_t, Icb>::const_iterator InstrumentStore::begin() const
+{
+    return m_icb.begin();
+}
+
 // Return end iterator to ICB map
 std::map<uint8_t, Icb>::iterator InstrumentStore::end()
+{
+    return m_icb.end();
+}
+
+// Return const end iterator to ICB map
+std::map<uint8_t, Icb>::const_iterator InstrumentStore::end() const
 {
     return m_icb.end();
 }
@@ -133,6 +212,16 @@ Wave* InstrumentStore::getWave(uint8_t block)
     else {
         return &(ret->second);
     }
+}
+
+// Clear all lists
+void InstrumentStore::clearLists()
+{
+    m_icb.clear();
+    m_vcf.clear();
+    m_ampl.clear();
+    m_freq.clear();
+    m_wave.clear();
 }
 
 } // namespace Wersi

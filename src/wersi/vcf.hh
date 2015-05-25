@@ -109,6 +109,16 @@ class Vcf {
         Vcf& operator=(const Vcf& source);
 
         /**
+          Copy VCF data.
+
+          Copies all members except the block number and buffer from source object. This is intended to duplicate
+          the VCF's contents to another existing VCF.
+
+          @param[in]    source      Source object to copy from
+         */
+        void copy(const Vcf& source);
+
+        /**
           Dissect VCF raw data buffer.
 
           Parses the raw VCF data buffer and updates object members.

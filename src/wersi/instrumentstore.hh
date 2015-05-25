@@ -100,6 +100,16 @@ class InstrumentStore {
         }
 
         /**
+          Copy instrument store contents.
+
+          Copies as much instrument data as possible from the source store.
+          TODO this currently assumes source store is a cartridge, this store a device.
+
+          @param[in]    source      Source instrument store to copy data from
+         */
+        void copyContents(const InstrumentStore& source);
+
+        /**
           Dissect instrument store raw data buffer.
 
           Parses the raw instrument store data buffer and updates object members.
@@ -132,6 +142,15 @@ class InstrumentStore {
         std::map<uint8_t, Icb>::iterator begin();
 
         /**
+          Get const iterator to beginning of ICB map.
+
+          Returns an iterator to the beginning of the ICB map.
+
+          @return                   Iterator to the beginning of the ICB map
+         */
+        std::map<uint8_t, Icb>::const_iterator begin() const;
+
+        /**
           Get iterator to end of ICB map.
 
           Returns an iterator to the end of the ICB map.
@@ -139,6 +158,15 @@ class InstrumentStore {
           @return                   Iterator to the end of the ICB map
          */
         std::map<uint8_t, Icb>::iterator end();
+
+        /**
+          Get const iterator to end of ICB map.
+
+          Returns an iterator to the end of the ICB map.
+
+          @return                   Iterator to the end of the ICB map
+         */
+        std::map<uint8_t, Icb>::const_iterator end() const;
 
         /**
           Get ICB by block number.
@@ -204,6 +232,13 @@ class InstrumentStore {
         std::map<uint8_t, Envelope> m_ampl;                 ///< AMPL data
         std::map<uint8_t, Envelope> m_freq;                 ///< FREQ data
         std::map<uint8_t, Wave>     m_wave;                 ///< WAVE data
+
+        /**
+          Clear all lists.
+
+          Clears all lists, usually in preparation of a fresh dissect() call.
+         */
+        void clearLists();
 
     private:
         InstrumentStore(const InstrumentStore&);            ///< Inhibit copying objects

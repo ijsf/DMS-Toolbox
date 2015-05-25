@@ -35,62 +35,56 @@
   Programm erhalten haben. Wenn nicht, siehe <http://www.gnu.org/licenses/>.
  */
 
-#include <wersi/envelope.hh>
-#include <cstring>
+#pragma once
+
+#include <wersi/instrumentstore.hh>
 
 namespace DMSToolbox {
 namespace Wersi {
 
-// Create new envelope object
-Envelope::Envelope(uint8_t blockNum, void* buffer, size_t size)
-    : m_blockNum(blockNum)
-    , m_buffer(static_cast<uint8_t*>(buffer))
-    , m_size(size)
-{
-    dissect();
-}
+/**
+  @ingroup wersi_group
 
-// Create new envelope object by copying
-Envelope::Envelope(const Envelope& source)
-    : m_blockNum(0)
-    , m_buffer(nullptr)
-    , m_size(0)
-{
-    *this = source;
-}
+  Wersi DMS-System DX10/EX10R device handler class.
 
-// Destroy envelope object
-Envelope::~Envelope()
-{
-}
+  This class implements an instrument store for the DX10/EX10R internal RAM. The binary representation isn't exactly
+  as in the device's RAM.
+ */
+class Dx10Device : public InstrumentStore {
+    public:
+        /**
+          Create new DX10/EX10R device object from buffer.
 
-// Copy envelope object members
-Envelope& Envelope::operator=(const Envelope& source)
-{
-    if (this != &source) {
-        m_blockNum = source.m_blockNum;
-        m_buffer = source.m_buffer;
-        m_size = source.m_size;
-        copy(source);
-    }
-    return *this;
-}
+          Creates a new DX10/EX10R device object and associates the given buffer with it. During creation, all data
+          items are initialized with zeroes but with the typical links between them.
 
-// Copy ICB object data
-void Envelope::copy(const Envelope& source)
-{
-    memcpy(m_buffer, source.m_buffer, m_size < source.m_size ? m_size : source.m_size);
-}
+          @param[in]    buffer      Raw data buffer
+          @param[in]    size        Size of data buffer
+         */
+        Dx10Device(void* buffer, size_t size);
 
-// Dissect envelope raw data
-void Envelope::dissect()
-{
-}
+        /**
+          Destroy DX10/EX10R device object.
 
-// Put together and update envelope raw data
-void Envelope::update()
-{
-}
+          Destroys the DX10/EX10R device object.
+         */
+        virtual ~Dx10Device();
+
+        /// Implements InstrumentStore::dissect()
+        virtual void dissect();
+
+        /// Implements InstrumentStore::update()
+        virtual void update();
+
+        /// Implements InstrumentStore::getNumIcbs()
+        virtual size_t getNumIcbs() const {
+            return 10;
+        }
+
+    private:
+        Dx10Device(const Dx10Device&);              ///< Inhibit copying objects
+        Dx10Device& operator=(const Dx10Device&);   ///< Inhibit copying objects
+};
 
 } // namespace Wersi
 } // namespace DMSToolbox

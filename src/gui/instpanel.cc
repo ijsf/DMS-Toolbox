@@ -72,15 +72,22 @@ void InstPanel::setInstrument(Wersi::InstrumentStore* store, uint8_t icbNum)
 
     // Handle ICB
     if (m_icb != nullptr) {
+        // Set ICB name
+        m_nameInput->ChangeValue(wxString::From8BitData(m_icb->getName().c_str()));
+
         // Get number of primary ICBs
         size_t numIcb = store->getNumIcbs();
 
-        // Construct ICB choice list
+        // Construct next ICB choice list
         m_nextIcbChoice->Clear();
         m_nextIcbChoice->Append(_("none"));
         m_nextIcbChoice->SetSelection(0);
         uint8_t tmp = m_icb->getNextIcb();
+        uint8_t offset = 0;
         for (auto& i : *m_store) {
+            if (offset == 0) {
+                offset = i.first - 1;
+            }
             wxString instName(wxT("("));
             instName << uint16_t(i.first) << wxT(") ");
             instName << wxString::From8BitData(i.second.getName().c_str());
@@ -92,31 +99,89 @@ void InstPanel::setInstrument(Wersi::InstrumentStore* store, uint8_t icbNum)
 
         // Construct VCF choice list
         m_vcfChoice->Clear();
-        for(size_t i = 0; i < numIcb; ++i) {
+        tmp = m_icb->getVcfBlock();
+        for (size_t i = 0; i < 10; ++i) {
+            uint16_t addr = i + offset;
             wxString name;
-            name << uint16_t(i);
+            name << addr;
             m_vcfChoice->Append(name);
+            if (addr == tmp) {
+                m_vcfChoice->SetSelection(m_vcfChoice->GetCount() - 1);
+            }
         }
 
+        // Construct AMPL choice list
         m_amplChoice->Clear();
+        tmp = m_icb->getAmplBlock();
+        for (size_t i = 0; i < 20; ++i) {
+            uint16_t addr = i + offset;
+            if (i >= numIcb) {
+                ++addr;
+            }
+            wxString name;
+            name << addr;
+            m_amplChoice->Append(name);
+            if (addr == tmp) {
+                m_amplChoice->SetSelection(m_amplChoice->GetCount() - 1);
+            }
+        }
+
+        // Construct FREQ choice list
         m_freqChoice->Clear();
+        tmp = m_icb->getFreqBlock();
+        for (size_t i = 0; i < 20; ++i) {
+            uint16_t addr = i + offset;
+            if (i >= numIcb) {
+                ++addr;
+            }
+            wxString name;
+            name << addr;
+            m_freqChoice->Append(name);
+            if (addr == tmp) {
+                m_freqChoice->SetSelection(m_freqChoice->GetCount() - 1);
+            }
+        }
+
+        // Construct WAVE choice list
         m_waveChoice->Clear();
+        tmp = m_icb->getWaveBlock();
+        for (size_t i = 0; i < 20; ++i) {
+            uint16_t addr = i + offset;
+            if (i >= numIcb) {
+                ++addr;
+            }
+            wxString name;
+            name << addr;
+            m_waveChoice->Append(name);
+            if (addr == tmp) {
+                m_waveChoice->SetSelection(m_waveChoice->GetCount() - 1);
+            }
+        }
+
+        // Configure dynamics inputs
+        m_dynamicsChoice->SetSelection(m_icb->getDynamics());
+        m_lowSelCheckBox->SetValue(m_icb->getLowSelect());
+        m_highSelCheckBox->SetValue(m_icb->getHighSelect());
+
+        // Configure output inputs
         m_leftCheckBox->SetValue(m_icb->getLeft());
         m_rightCheckBox->SetValue(m_icb->getRight());
-        m_brightCheckBox->SetValue(m_icb->getBright());
         m_vcfCheckBox->SetValue(m_icb->getVcf());
         m_wvCheckBox->SetValue(m_icb->getWersiVoice());
-        m_unk1CheckBox->SetValue(false);
+
+        // Configure transpose/detune/bright
         m_transposeInput->Clear();
         *m_transposeInput << int16_t(m_icb->getTranspose());
         m_detuneInput->Clear();
         *m_detuneInput << int16_t(m_icb->getDetune());
-        m_wvModeChoice->Clear();
+        m_brightCheckBox->SetValue(m_icb->getBright());
+
+        // Configure WersiVoice inputs
         m_wvLeftCheckBox->SetValue(m_icb->getWvLeft());
         m_wvRightCheckBox->SetValue(m_icb->getWvRight());
         m_wvFbFlatCheckBox->SetValue(m_icb->getWvFbFlat());
         m_wvFbDeepCheckBox->SetValue(m_icb->getWvFbDeep());
-        m_nameInput->ChangeValue(wxString::From8BitData(m_icb->getName().c_str()));
+        m_wvModeChoice->SetSelection(static_cast<uint8_t>(m_icb->getWvMode()));
     }
     else {
         // TODO clear and disable inputs
@@ -124,22 +189,32 @@ void InstPanel::setInstrument(Wersi::InstrumentStore* store, uint8_t icbNum)
 
     // Handle VCF
     if (m_vcf != nullptr) {
+        // Configure output inputs
         m_vcfLeftCheckBox->SetValue(m_vcf->getLeft());
         m_vcfRightCheckBox->SetValue(m_vcf->getRight());
+        m_vcfWvCheckBox->SetValue(m_vcf->getWersiVoice());
+
+        // Configure mode inputs
         m_lowPassCheckBox->SetValue(m_vcf->getLowPass());
         m_fourPolesCheckBox->SetValue(m_vcf->getFourPoles());
-        m_vcfWvCheckBox->SetValue(m_vcf->getWersiVoice());
-        m_noiseCheckBox->SetValue(m_vcf->getNoise());
         m_distortionCheckBox->SetValue(m_vcf->getDistortion());
-        m_unk2CheckBox->SetValue(false);
+
+        // Configure cutoff/resonance inputs
         m_cutoffInput->Clear();
         *m_cutoffInput << int16_t(m_vcf->getFrequency());
         m_resonanceInput->Clear();
         *m_resonanceInput << uint16_t(m_vcf->getQuality());
-        m_noiseTypeChoice->Clear();
-        m_envModeChoice->Clear();
+
+        // Configure noise inputs
+        m_noiseCheckBox->SetValue(m_vcf->getNoise());
+        m_noiseTypeChoice->SetSelection(static_cast<uint8_t>(m_vcf->getNoiseType()));
+
+        // Configure envelope inputs
+        m_envModeChoice->SetSelection(static_cast<uint8_t>(m_vcf->getEnvelopeMode()));
         m_retriggerCheckBox->SetValue(m_vcf->getRetrigger());
         m_trackingCheckBox->SetValue(m_vcf->getTracking());
+
+        // Configure envelope parameter inputs
         m_t1TimeInput->Clear();
         *m_t1TimeInput << uint16_t(m_vcf->getT1Time());
         m_t1IntensityInput->Clear();

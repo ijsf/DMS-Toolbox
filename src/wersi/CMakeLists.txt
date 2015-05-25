@@ -9,6 +9,7 @@ set(SOURCES
 	instrumentstore.cc
 	mk1cartridge.cc
 	dx10cartridge.cc
+	dx10device.cc
 	sysex.cc
 )
 
@@ -20,6 +21,7 @@ set(HEADERS
 	instrumentstore.hh
 	mk1cartridge.hh
 	dx10cartridge.hh
+	dx10device.hh
 	sysex.hh
 )
 

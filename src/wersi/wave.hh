@@ -95,6 +95,18 @@ class Wave {
         Wave& operator=(const Wave& source);
 
         /**
+          Copy wave data.
+
+          Copies all members except the block number and buffer from source object. This is intended to duplicate
+          the wave's contents to another existing wave. The existing wave must have a buffer at least as large as the
+          source wave. Don't copy fixed formant waves into relative formant wave objects if they don't have the
+          additional buffer area for fixed formant configuration.
+
+          @param[in]    source      Source object to copy from
+         */
+        void copy(const Wave& source);
+
+        /**
           Dissect wave raw data buffer.
 
           Parses the raw wave data buffer and updates object members.

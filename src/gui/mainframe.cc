@@ -43,6 +43,7 @@
 #include <exceptions.hh>
 #include <wersi/mk1cartridge.hh>
 #include <wersi/dx10cartridge.hh>
+#include <wersi/dx10device.hh>
 #include <wersi/icb.hh>
 #include <wersi/sysex.hh>
 
@@ -79,6 +80,7 @@ MainFrame::MainFrame(wxWindow* parent)
     , m_root(m_instTree->AddRoot(_("Instruments")))
     , m_devices(m_instTree->AppendItem(m_root, _("Devices")))
     , m_cartridges(m_instTree->AppendItem(m_root, _("Cartridges")))
+    , m_dragStore(nullptr)
     , m_midiIn(nullptr)
     , m_midiOut(nullptr)
     , m_midiInPorts()
@@ -205,7 +207,17 @@ void MainFrame::applyConfiguration()
                     throw ConfigurationException("Invalid value for device type");
                 }
                 is.m_type = uint8_t(tmp);
-                /*auto id = */m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+
+                // Create instrument store
+                is.m_store = new Dx10Device(new uint8_t[6180], 6180);
+
+                auto id = m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+                for (auto& i : *(is.m_store)) {
+                    wxString instName(wxT("("));
+                    instName << uint16_t(i.first) << wxT(") ");
+                    instName << wxString::From8BitData(i.second.getName().c_str());
+                    m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
+                }
                 m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
             }
             catch (Exception& e) {
@@ -353,6 +365,54 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
     }
 }
 
+// Handle begin drag event
+void MainFrame::onInstBeginDrag(wxTreeEvent& event)
+{
+    auto sel = m_instTree->GetItemData(event.GetItem());
+
+    if (sel != nullptr) {
+        auto inst = dynamic_cast<InstrumentHelper*>(sel);
+        auto store = inst->getStore();
+        auto icbNum = inst->getIcb();
+        if (store.m_store != nullptr && store.m_type == 0 && icbNum == 0) {
+            // Instrument store drag - allow it
+            m_dragStore = store.m_store;
+            event.Allow();
+            return;
+        }
+    }
+    event.Veto();
+}
+
+// Handle end drag event
+void MainFrame::onInstEndDrag(wxTreeEvent& event)
+{
+    auto item = event.GetItem();
+    auto sel = m_instTree->GetItemData(item);
+
+    if (sel != nullptr) {
+        auto inst = dynamic_cast<InstrumentHelper*>(sel);
+        auto store = inst->getStore();
+        auto icbNum = inst->getIcb();
+        if (store.m_store != nullptr && m_dragStore != nullptr
+                &&store.m_store != m_dragStore && store.m_type != 0 && icbNum == 0) {
+            // Instrument store drag from cartridge to device - allow it
+            store.m_store->copyContents(*m_dragStore);
+            m_instTree->DeleteChildren(item);
+            for (auto& i : *(store.m_store)) {
+                wxString instName(wxT("("));
+                instName << uint16_t(i.first) << wxT(") ");
+                instName << wxString::From8BitData(i.second.getName().c_str());
+                m_instTree->AppendItem(item, instName, -1, -1, new InstrumentHelper(store, i.first));
+            }
+            event.Allow();
+            return;
+        }
+    }
+    m_dragStore = nullptr;
+    event.Veto();
+}
+
 // Handle file/open menu item
 void MainFrame::onFileOpen(wxCommandEvent& /*event*/)
 {
@@ -478,7 +538,17 @@ void MainFrame::addDevice()
             is.m_outPort = dlg.getOutPort();
             is.m_channel = dlg.getChannel();
             is.m_type = dlg.getType();
-            /*auto id = */m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+
+            // Create instrument store
+            is.m_store = new Dx10Device(new uint8_t[6180], 6180);
+
+            auto id = m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+            for (auto& i : *(is.m_store)) {
+                wxString instName(wxT("("));
+                instName << uint16_t(i.first) << wxT(") ");
+                instName << wxString::From8BitData(i.second.getName().c_str());
+                m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
+            }
             m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
             m_config.SetPath(wxT("/Devices"));
             m_config.SetPath(name);
