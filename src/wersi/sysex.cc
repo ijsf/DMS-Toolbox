@@ -36,7 +36,12 @@
  */
 
 #include <wersi/sysex.hh>
+#include <wersi/icb.hh>
+#include <wersi/vcf.hh>
+#include <wersi/envelope.hh>
+#include <wersi/wave.hh>
 #include <exceptions.hh>
+#include <cstring>
 
 namespace DMSToolbox {
 namespace Wersi {
@@ -95,6 +100,131 @@ void SysEx::fromSysEx(uint8_t device, const SysExMessage& sysEx, Message& messag
         ++d;
     }
 }
+
+#ifdef HAVE_RTMIDI
+// Send ICB to device
+void SysEx::sendIcb(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Icb& icb)
+{
+    // Construct raw message
+    uint8_t buf[sizeof(Message) + 15];
+    auto msg = reinterpret_cast<Message*>(buf);
+    msg->m_type = BlockType::IcBlock;
+    msg->m_address = blockNum;
+    msg->m_length = 16;
+    memcpy(msg->m_data, icb.getBuffer(), 16);
+
+    // Convert to SysEx message
+    uint8_t out[sizeof(SysExMessage) + 32];
+    auto omsg = reinterpret_cast<SysExMessage*>(out);
+    size_t length = toSysEx(type, *msg, *omsg);
+
+    // Create MIDI message vector and send it
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < length; ++i) {
+        data.push_back(out[i]);
+    }
+    midi->sendMessage(&data);
+}
+
+// Send VCF to device
+void SysEx::sendVcf(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Vcf& vcf)
+{
+    // Construct raw message
+    uint8_t buf[sizeof(Message) + 9];
+    auto msg = reinterpret_cast<Message*>(buf);
+    msg->m_type = BlockType::VcfBlock;
+    msg->m_address = blockNum;
+    msg->m_length = 10;
+    memcpy(msg->m_data, vcf.getBuffer(), 10);
+
+    // Convert to SysEx message
+    uint8_t out[sizeof(SysExMessage) + 20];
+    auto omsg = reinterpret_cast<SysExMessage*>(out);
+    size_t length = toSysEx(type, *msg, *omsg);
+
+    // Create MIDI message vector and send it
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < length; ++i) {
+        data.push_back(out[i]);
+    }
+    midi->sendMessage(&data);
+}
+
+// Send AMPL to device
+void SysEx::sendAmpl(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Envelope& ampl)
+{
+    // Construct raw message
+    uint8_t buf[sizeof(Message) + 43];
+    auto msg = reinterpret_cast<Message*>(buf);
+    msg->m_type = BlockType::AmplBlock;
+    msg->m_address = blockNum;
+    msg->m_length = ampl.getBufferSize();
+    memcpy(msg->m_data, ampl.getBuffer(), msg->m_length);
+
+    // Convert to SysEx message
+    uint8_t out[sizeof(SysExMessage) + 88];
+    auto omsg = reinterpret_cast<SysExMessage*>(out);
+    size_t length = toSysEx(type, *msg, *omsg);
+
+    // Create MIDI message vector and send it
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < length; ++i) {
+        data.push_back(out[i]);
+    }
+    midi->sendMessage(&data);
+}
+
+// Send FREQ to device
+void SysEx::sendFreq(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Envelope& freq)
+{
+    // Construct raw message
+    uint8_t buf[sizeof(Message) + 31];
+    auto msg = reinterpret_cast<Message*>(buf);
+    msg->m_type = BlockType::FreqBlock;
+    msg->m_address = blockNum;
+    msg->m_length = freq.getBufferSize();
+    memcpy(msg->m_data, freq.getBuffer(), msg->m_length);
+
+    // Convert to SysEx message
+    uint8_t out[sizeof(SysExMessage) + 64];
+    auto omsg = reinterpret_cast<SysExMessage*>(out);
+    size_t length = toSysEx(type, *msg, *omsg);
+
+    // Create MIDI message vector and send it
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < length; ++i) {
+        data.push_back(out[i]);
+    }
+    midi->sendMessage(&data);
+}
+
+// Send WAVE to device
+void SysEx::sendWave(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Wave& wave)
+{
+    // Construct raw message
+    uint8_t buf[sizeof(Message) + 211];
+    auto msg = reinterpret_cast<Message*>(buf);
+    msg->m_type = BlockType::FixWaveBlock;
+    msg->m_address = blockNum;
+    msg->m_length = wave.getBufferSize();
+    if (msg->m_length < 212) {
+        msg->m_type = BlockType::RelWaveBlock;
+    }
+    memcpy(msg->m_data, wave.getBuffer(), msg->m_length);
+
+    // Convert to SysEx message
+    uint8_t out[sizeof(SysExMessage) + 424];
+    auto omsg = reinterpret_cast<SysExMessage*>(out);
+    size_t length = toSysEx(type, *msg, *omsg);
+
+    // Create MIDI message vector and send it
+    std::vector<unsigned char> data;
+    for (size_t i = 0; i < length; ++i) {
+        data.push_back(out[i]);
+    }
+    midi->sendMessage(&data);
+}
+#endif // HAVE_RTMIDI
 
 } // namespace Wersi
 } // namespace DMSToolbox

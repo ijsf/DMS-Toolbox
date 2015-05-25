@@ -359,8 +359,8 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
                 m_wavePanel->setWave(store.m_store->getWave(icb->getWaveBlock()));
             }
         }
-        else if (store.m_store == nullptr && icbNum == 0) {
-            //readDevice(store);
+        else if (store.m_store != nullptr && icbNum == 0 && store.m_type != 0) {
+            writeDevice(store);
         }
     }
 }
@@ -631,6 +631,70 @@ void MainFrame::readDevice(const InstStore& store)
     delete[] buf;
     m_midiOut->closePort();
     m_midiIn->closePort();
+#endif // HAVE_RTMIDI
+}
+
+// Write MIDI device
+void MainFrame::writeDevice(const InstStore& store)
+{
+#ifdef HAVE_RTMIDI
+    m_midiOut->openPort(store.m_outPort);
+    uint8_t offset = 0;
+
+    // Send ICBs
+    for (auto& i : *(store.m_store)) {
+        SysEx::sendIcb(m_midiOut, store.m_type, i.first, i.second);
+        if (offset == 0) {
+            offset = i.first - 1;
+        }
+    }
+
+    // Send VCFs
+    for (size_t i = 0; i < 10; ++i) {
+        uint8_t addr = i + offset;
+        auto vcf = store.m_store->getVcf(addr);
+        if (vcf != nullptr) {
+            SysEx::sendVcf(m_midiOut, store.m_type, addr, *vcf);
+        }
+    }
+
+    // Send AMPLs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + offset;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto ampl = store.m_store->getAmpl(addr);
+        if (ampl != nullptr) {
+            SysEx::sendAmpl(m_midiOut, store.m_type, addr, *ampl);
+        }
+    }
+
+    // Send FREQs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + offset;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto freq = store.m_store->getFreq(addr);
+        if (freq != nullptr) {
+            SysEx::sendFreq(m_midiOut, store.m_type, addr, *freq);
+        }
+    }
+
+    // Send WAVEs
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + offset;
+        if (i >= 10) {
+            ++addr;
+        }
+        auto wave = store.m_store->getWave(addr);
+        if (wave != nullptr) {
+            SysEx::sendWave(m_midiOut, store.m_type, addr, *wave);
+        }
+    }
+
+    m_midiOut->closePort();
 #endif // HAVE_RTMIDI
 }
 

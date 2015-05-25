@@ -39,8 +39,17 @@
 
 #include <common.hh>
 
+#ifdef HAVE_RTMIDI
+#include <RtMidi.h>
+#endif // HAVE_RTMIDI
+
 namespace DMSToolbox {
 namespace Wersi {
+
+class Icb;
+class Vcf;
+class Envelope;
+class Wave;
 
 /**
   @ingroup wersi_group
@@ -114,6 +123,68 @@ class SysEx {
           @param[in,out]    message     Message data
          */
         static void fromSysEx(uint8_t device, const SysExMessage& sysEx, Message& message);
+
+#ifdef HAVE_RTMIDI
+        /**
+          Send ICB to device.
+
+          Sends the given ICB with given block number to device with given type.
+
+          @param[in]        midi        MIDI port to use (must be opened)
+          @param[in]        type        Device type
+          @param[in]        blockNum    Block number
+          @param[in]        icb         ICB to send to device
+         */
+        static void sendIcb(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Icb& icb);
+
+        /**
+          Send VCF to device.
+
+          Sends the given VCF with given block number to device with given type.
+
+          @param[in]        midi        MIDI port to use (must be opened)
+          @param[in]        type        Device type
+          @param[in]        blockNum    Block number
+          @param[in]        vcf         VCF to send to device
+         */
+        static void sendVcf(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Vcf& vcf);
+
+        /**
+          Send AMPL to device.
+
+          Sends the given AMPL with given block number to device with given type.
+
+          @param[in]        midi        MIDI port to use (must be opened)
+          @param[in]        type        Device type
+          @param[in]        blockNum    Block number
+          @param[in]        ampl        AMPL to send to device
+         */
+        static void sendAmpl(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Envelope& ampl);
+
+        /**
+          Send FREQ to device.
+
+          Sends the given FREQ with given block number to device with given type.
+
+          @param[in]        midi        MIDI port to use (must be opened)
+          @param[in]        type        Device type
+          @param[in]        blockNum    Block number
+          @param[in]        ampl        FREQ to send to device
+         */
+        static void sendFreq(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Envelope& freq);
+
+        /**
+          Send WAVE to device.
+
+          Sends the given WAVE with given block number to device with given type.
+
+          @param[in]        midi        MIDI port to use (must be opened)
+          @param[in]        type        Device type
+          @param[in]        blockNum    Block number
+          @param[in]        ampl        WAVE to send to device
+         */
+        static void sendWave(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Wave& wave);
+#endif // HAVE_RTMIDI
 };
 
 } // namespace Wersi

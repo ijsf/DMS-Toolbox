@@ -98,6 +98,17 @@ class Vcf {
         ~Vcf();
 
         /**
+          Get raw buffer.
+
+          Returns a const pointer to the raw buffer.
+
+          @return                   Raw buffer const pointer
+         */
+        const void* getBuffer() const {
+            return m_buffer;
+        }
+
+        /**
           Copy VCF object.
 
           Copies all members of the VCF object from the source object.

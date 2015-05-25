@@ -84,6 +84,28 @@ class Wave {
         ~Wave();
 
         /**
+          Get raw buffer.
+
+          Returns a const pointer to the raw buffer.
+
+          @return                   Raw buffer const pointer
+         */
+        const void* getBuffer() const {
+            return m_buffer;
+        }
+
+        /**
+          Get raw buffer size.
+
+          Returns the raw buffer size.
+
+          @return                   Raw buffer size
+         */
+        size_t getBufferSize() const {
+            return m_size;
+        }
+
+        /**
           Copy wave object.
 
           Copies all members of the wave object from the source object.

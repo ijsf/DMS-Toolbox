@@ -277,6 +277,15 @@ class MainFrame : public MainFrameBase {
           @param[in]    store       Instrument store with all necessary device data
          */
         void readDevice(const InstStore& store);
+
+        /**
+          Write device contents.
+
+          Writes all instrument data to a device using the given instrument store wrapper.
+
+          @param[in]    store       Instrument store with all necessary device data
+         */
+        void writeDevice(const InstStore& store);
 };
 
 } // namespace Gui

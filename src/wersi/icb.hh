@@ -93,6 +93,17 @@ class Icb {
         ~Icb();
 
         /**
+          Get raw buffer.
+
+          Returns a const pointer to the raw buffer.
+
+          @return                   Raw buffer const pointer
+         */
+        const void* getBuffer() const {
+            return m_buffer;
+        }
+
+        /**
           Copy ICB object.
 
           Copies all members of the ICB object from the source object.
