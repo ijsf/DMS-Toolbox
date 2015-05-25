@@ -42,6 +42,12 @@
 #include <map>
 #include <string>
 
+#ifdef HAVE_RTMIDI
+// Forward declarations
+class RtMidiIn;
+class RtMidiOut;
+#endif // HAVE_RTMIDI
+
 namespace DMSToolbox {
 
 namespace Wersi {
@@ -88,6 +94,28 @@ class MainFrame : public MainFrameBase {
           interfaces are not found.
          */
         void applyConfiguration();
+
+        /**
+          Return map of MIDI input ports.
+
+          Returns the map of MIDI input ports, used to show it for selection in the device dialog.
+
+          @return                   Const ref to the map of MIDI input ports
+         */
+        const std::map<unsigned int, wxString> getMidiInPorts() const {
+            return m_midiInPorts;
+        }
+
+        /**
+          Return map of MIDI output ports.
+
+          Returns the map of MIDI output ports, used to show it for selection in the device dialog.
+
+          @return                   Const ref to the map of MIDI output ports
+         */
+        const std::map<unsigned int, wxString> getMidiOutPorts() const {
+            return m_midiOutPorts;
+        }
 
     protected:
         /**
@@ -145,18 +173,27 @@ class MainFrame : public MainFrameBase {
         virtual void onEditRename(wxCommandEvent& event);
 
     private:
-        /// Helper class to store instrument data with choice
+        /// Instrument store wrapper struct to hold MIDI information for physical devices
+        struct InstStore {
+            Wersi::InstrumentStore* m_store;    ///< Instrument store
+            unsigned int            m_inPort;   ///< MIDI input port
+            unsigned int            m_outPort;  ///< MIDI output port
+            uint8_t                 m_channel;  ///< MIDI channel
+            uint8_t                 m_type;     ///< Device type, 0 for cartridge
+        };
+
+        /// Helper class to store instrument data with tree item
         class InstrumentHelper : public wxTreeItemData {
             public:
                 /// Create instrument helper
-                InstrumentHelper(Wersi::InstrumentStore* store, uint8_t icb)
+                InstrumentHelper(const InstStore& store, uint8_t icb)
                     : wxTreeItemData()
                     , m_store(store)
                     , m_icb(icb) {
                 }
 
                 /// Get instrument store from instrument helper
-                Wersi::InstrumentStore* getStore() const {
+                const InstStore& getStore() const {
                     return m_store;
                 }
 
@@ -166,8 +203,8 @@ class MainFrame : public MainFrameBase {
                 }
 
             private:
-                Wersi::InstrumentStore* m_store;    ///< Instrument store
-                uint8_t                 m_icb;      ///< ICB number of 0 if store root
+                InstStore   m_store;        ///< Instrument store
+                uint8_t     m_icb;          ///< ICB number of 0 if store root
         };
 
         wxConfig        m_config;           ///< Application configuration
@@ -180,7 +217,18 @@ class MainFrame : public MainFrameBase {
         wxTreeItemId    m_cartridges;       ///< Cartridges node of the instrument tree
 
         /// Instrument stores, mapped to names
-        std::map<wxString, Wersi::InstrumentStore*> m_instrumentStores;
+        std::map<wxString, InstStore>       m_instrumentStores;
+
+#ifdef HAVE_RTMIDI
+        RtMidiIn*       m_midiIn;           ///< MIDI input object
+        RtMidiOut*      m_midiOut;          ///< MIDI output object
+#endif // HAVE_RTMIDI
+
+        /// List of MIDI input ports
+        std::map<unsigned int, wxString>    m_midiInPorts;
+
+        /// List of MIDI output ports
+        std::map<unsigned int, wxString>    m_midiOutPorts;
 
         /**
           Read cartridge file and create instrument store from it.
@@ -192,6 +240,13 @@ class MainFrame : public MainFrameBase {
           @param[in]    cartName    Name of cartridge as displayed in the cartridge tree
          */
         void readCartridgeFile(const wxString& filePath, const wxString& cartName);
+
+        /**
+          Add device.
+
+          Shows the add device dialog and adds device if correct data has been entered and Add button was pushed.
+         */
+        void addDevice();
 };
 
 } // namespace Gui

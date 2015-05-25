@@ -36,14 +36,112 @@
  */
 
 #include <gui/adddevicedialog.hh>
+#include <gui/mainframe.hh>
+#include <exceptions.hh>
 
 namespace DMSToolbox {
 namespace Gui {
 
+// Helper to associate MIDI port index with choice item
+class PortHelper : public wxClientData {
+    public:
+        PortHelper(unsigned int index)
+            : wxClientData()
+            , m_index(index) {
+        }
+
+        unsigned int getIndex() {
+            return m_index;
+        }
+
+    private:
+        unsigned int m_index;
+};
+
 // Create add device dialog
-AddDeviceDialog::AddDeviceDialog(wxWindow* parent)
+AddDeviceDialog::AddDeviceDialog(MainFrame* parent)
     : AddDeviceDialogBase(parent)
 {
+    // Preset a name
+    m_nameInput->SetValue(_("new device"));
+
+    // Fill MIDI port choices
+    m_inPortChoice->Clear();
+    for (auto& i : parent->getMidiInPorts()) {
+        auto ph = new PortHelper(i.first);
+        m_inPortChoice->Append(i.second, ph);
+    }
+    m_inPortChoice->SetSelection(0);
+    m_outPortChoice->Clear();
+    for (auto& i : parent->getMidiOutPorts()) {
+        auto ph = new PortHelper(i.first);
+        m_outPortChoice->Append(i.second, ph);
+    }
+    m_outPortChoice->SetSelection(0);
+
+    // Preset channel and type
+    m_channelChoice->SetSelection(0);
+    m_typeChoice->SetSelection(0);
+
+    Fit();
+}
+
+// Get device name
+wxString AddDeviceDialog::getName() const
+{
+    const wxString& str = m_nameInput->GetValue();
+    if (str.IsEmpty()) {
+        throw ConfigurationException("No name given");
+    }
+    return str;
+}
+
+// Get MIDI input port index
+unsigned int AddDeviceDialog::getInPort() const
+{
+    int sel = m_inPortChoice->GetSelection();
+    if (sel != wxNOT_FOUND) {
+        auto cd = static_cast<PortHelper*>(m_inPortChoice->GetClientData(sel));
+        if (cd != nullptr) {
+            return cd->getIndex();
+        }
+    }
+    throw ConfigurationException("No MIDI input port selected");
+}
+
+// Get MIDI output port index
+unsigned int AddDeviceDialog::getOutPort() const
+{
+    int sel = m_outPortChoice->GetSelection();
+    if (sel != wxNOT_FOUND) {
+        auto cd = static_cast<PortHelper*>(m_outPortChoice->GetClientData(sel));
+        if (cd != nullptr) {
+            return cd->getIndex();
+        }
+    }
+    throw ConfigurationException("No MIDI output port selected");
+}
+
+// Get MIDI channel
+uint8_t AddDeviceDialog::getChannel() const
+{
+    int sel = m_channelChoice->GetSelection();
+    if (sel == wxNOT_FOUND) {
+        throw ConfigurationException("No MIDI channel selected");
+    }
+
+    return sel + 1;
+}
+
+// Get device type
+uint8_t AddDeviceDialog::getType() const
+{
+    int sel = m_typeChoice->GetSelection();
+    if (sel == wxNOT_FOUND) {
+        throw ConfigurationException("No device type selected");
+    }
+
+    return sel + 1;
 }
 
 } // namespace Gui

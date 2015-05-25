@@ -53,7 +53,6 @@ else(RTMIDI_LIBRARY)
 endif(RTMIDI_LIBRARY)
 if(RTMIDI_FOUND)
     include_directories("${RTMIDI_INCLUDE_DIR}")
-    set(BUILD_MIDI 1)
     add_definitions(-DHAVE_RTMIDI)
 endif(RTMIDI_FOUND)
 

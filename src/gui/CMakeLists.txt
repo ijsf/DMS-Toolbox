@@ -45,10 +45,15 @@ add_executable(dmstb ${SOURCES}
     $<TARGET_OBJECTS:wersi>
 )
 endif()
+
 # TODO need this due to generated code not being so ultra-clean
 if(CMAKE_COMPILER_IS_GNUCXX)
     target_compile_options(dmstb PRIVATE -Wno-effc++)
 endif()
+
+if(RTMIDI_FOUND)
+    target_link_libraries(dmstb ${RTMIDI_LIBRARY})
+endif(RTMIDI_FOUND)
 
 target_link_libraries(dmstb ${wxWidgets_LIBRARIES})
 install(TARGETS dmstb

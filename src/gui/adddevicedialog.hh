@@ -42,6 +42,9 @@
 namespace DMSToolbox {
 namespace Gui {
 
+// Forward declarations
+class MainFrame;
+
 /**
   @ingroup gui_group
 
@@ -51,7 +54,60 @@ namespace Gui {
  */
 class AddDeviceDialog : public AddDeviceDialogBase {
     public:
-        AddDeviceDialog(wxWindow* parent);
+        /**
+          Create add device dialog.
+
+          Creates an add device dialog, letting the user choose the MIDI devices, channel and type of a new Wersi
+          device.
+
+          @param[in]    parent      Main frame this dialog belongs to. Used as wxWindow and for MIDI port information
+         */
+        AddDeviceDialog(MainFrame* parent);
+
+        /**
+          Get device name.
+
+          Returns the name for the new device.
+
+          @return                   Name for the new device
+         */
+        wxString getName() const;
+
+        /**
+          Get MIDI input port index.
+
+          Returns the MIDI input port index.
+
+          @return                   MIDI input port index
+         */
+        unsigned int getInPort() const;
+
+        /**
+          Get MIDI output port index.
+
+          Returns the MIDI output port index.
+
+          @return                   MIDI output port index
+         */
+        unsigned int getOutPort() const;
+
+        /**
+          Get MIDI channel.
+
+          Returns the MIDI channel.
+
+          @return                   MIDI channel
+         */
+        uint8_t getChannel() const;
+
+        /**
+          Get device type.
+
+          Returns the device type, 1 for MK1/EX20, 2 for DX10/EX10R.
+
+          @return                   Device type
+         */
+        uint8_t getType() const;
 };
 
 } // namespace Gui

@@ -51,6 +51,13 @@
 #include <wx/wfstream.h>
 #include <wx/msgdlg.h>
 
+#ifdef HAVE_RTMIDI
+#include <RtMidi.h>
+#ifndef RtMidiError
+#define RtMidiError RtError
+#endif // RtMidiError
+#endif // HAVE_RTMIDI
+
 using namespace DMSToolbox::Wersi;
 
 namespace DMSToolbox {
@@ -66,6 +73,10 @@ MainFrame::MainFrame(wxWindow* parent)
     , m_root(m_instTree->AddRoot(_("Instruments")))
     , m_devices(m_instTree->AppendItem(m_root, _("Devices")))
     , m_cartridges(m_instTree->AppendItem(m_root, _("Cartridges")))
+    , m_midiIn(nullptr)
+    , m_midiOut(nullptr)
+    , m_midiInPorts()
+    , m_midiOutPorts()
 {
     // Add panels
     m_mainTabs->AddPage(m_instPanel, _("Basic"), true);
@@ -81,14 +92,130 @@ MainFrame::MainFrame(wxWindow* parent)
 MainFrame::~MainFrame()
 {
     for (auto& i : m_instrumentStores) {
-        auto buffer = static_cast<uint8_t*>(i.second->getBuffer());
-        delete[] buffer;
+        if (i.second.m_store != nullptr) {
+            auto buffer = static_cast<uint8_t*>(i.second.m_store->getBuffer());
+            delete[] buffer;
+            delete i.second.m_store;
+        }
     }
+#ifdef HAVE_RTMIDI
+    if (m_midiIn != nullptr) {
+        delete m_midiIn;
+    }
+    if (m_midiOut != nullptr) {
+        delete m_midiOut;
+    }
+#endif // HAVE_RTMIDI
 }
 
 // Apply configuration
 void MainFrame::applyConfiguration()
 {
+#ifdef HAVE_RTMIDI
+    // Initialize MIDI
+    bool midiOk = true;
+    if (m_midiIn == nullptr) {
+        try {
+            m_midiIn = new RtMidiIn();
+        }
+        catch (RtMidiError&) {
+            midiOk = false;
+        }
+    }
+    if (m_midiOut == nullptr) {
+        try {
+            m_midiOut = new RtMidiOut();
+        }
+        catch (RtMidiError&) {
+            midiOk = false;
+        }
+    }
+    if (midiOk) {
+        m_midiInPorts.clear();
+        unsigned int numPorts = m_midiIn->getPortCount();
+        for (unsigned int idx = 0; idx < numPorts; ++idx) {
+            wxString name(wxString::FromUTF8(m_midiIn->getPortName(idx).c_str()));
+            m_midiInPorts.insert(std::pair<unsigned int, wxString>(idx, name));
+        }
+        m_midiOutPorts.clear();
+        numPorts = m_midiOut->getPortCount();
+        for (unsigned int idx = 0; idx < numPorts; ++idx) {
+            wxString name(wxString::FromUTF8(m_midiOut->getPortName(idx).c_str()));
+            m_midiOutPorts.insert(std::pair<unsigned int, wxString>(idx, name));
+        }
+    }
+    else {
+        wxMessageDialog err(this, _("The MIDI subsystem reported an error, so MIDI is not available"),
+                            _("Could not initialize MIDI"), wxOK | wxCENTRE | wxICON_ERROR);
+        err.ShowModal();
+    }
+
+    // Read configured devices
+    {
+        m_config.SetPath(wxT("/Devices"));
+        wxString name;
+        long index;
+        bool cont = m_config.GetFirstGroup(name, index);
+        while (cont) {
+            m_config.SetPath(name);
+            try {
+                InstStore is;
+                is.m_store = nullptr;
+
+                wxString inPortName = m_config.Read(wxT("InPort"));
+                bool found = false;
+                unsigned int numPorts = m_midiIn->getPortCount();
+                for (unsigned int idx = 0; idx < numPorts; ++idx) {
+                    wxString name(wxString::FromUTF8(m_midiIn->getPortName(idx).c_str()));
+                    if (name == inPortName) {
+                        is.m_inPort = idx;
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    throw ConfigurationException("MIDI input port not found");
+                }
+
+                wxString outPortName = m_config.Read(wxT("OutPort"));
+                found = false;
+                numPorts = m_midiOut->getPortCount();
+                for (unsigned int idx = 0; idx < numPorts; ++idx) {
+                    wxString name(wxString::FromUTF8(m_midiOut->getPortName(idx).c_str()));
+                    if (name == outPortName) {
+                        is.m_outPort = idx;
+                        found = true;
+                    }
+                }
+                if (!found) {
+                    throw ConfigurationException("MIDI output port not found");
+                }
+
+                long tmp = 0;
+                if (!m_config.Read(wxT("Channel"), &tmp) || tmp < 1 || tmp > 16) {
+                    throw ConfigurationException("Invalid value for MIDI channel");
+                }
+                is.m_channel = uint8_t(tmp);
+                if (!m_config.Read(wxT("Type"), &tmp) || tmp < 1 || tmp > 2) {
+                    throw ConfigurationException("Invalid value for device type");
+                }
+                is.m_type = uint8_t(tmp);
+                /*auto id = */m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+                m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
+            }
+            catch (Exception& e) {
+                wxString msg(_("Device '"));
+                msg << name << _("' could not be created, reason: ");
+                msg << wxString::FromUTF8(e.what());
+                wxMessageDialog err(this, msg, _("Could not creatre device"),
+                                    wxOK | wxCENTRE | wxICON_ERROR);
+                err.ShowModal();
+            }
+            m_config.SetPath(wxT(".."));
+            cont = m_config.GetNextGroup(name, index);
+        }
+    }
+#endif // HAVE_RTMIDI
+
     // Read cartridges opened last time
     m_config.SetPath(wxT("/Cartridges"));
     wxString name;
@@ -131,7 +258,7 @@ void MainFrame::onInstRenameBegin(wxTreeEvent& event)
         auto inst = dynamic_cast<InstrumentHelper*>(ren);
         auto store = inst->getStore();
         auto icbNum = inst->getIcb();
-        if (store != nullptr && icbNum == 0) {
+        if (store.m_store != nullptr && icbNum == 0) {
             // Only instrument stores may be renamed
             return;
         }
@@ -152,13 +279,13 @@ void MainFrame::onInstRename(wxTreeEvent& event)
         auto inst = dynamic_cast<InstrumentHelper*>(ren);
         auto store = inst->getStore();
         auto icbNum = inst->getIcb();
-        if (store != nullptr && icbNum == 0) {
+        if (store.m_store != nullptr && icbNum == 0) {
             // Scan through instrument stores and check for duplicate name
             auto newLabel = event.GetLabel();
             wxString oldLabel;
             bool veto = false;
             for (auto& i : m_instrumentStores) {
-                if (i.second == store) {
+                if (i.second.m_store == store.m_store) {
                     oldLabel = i.first;
                 }
                 if (i.first == newLabel) {
@@ -174,7 +301,7 @@ void MainFrame::onInstRename(wxTreeEvent& event)
             }
             if (veto) {
                 event.Veto();
-                wxMessageDialog err(this, _("Instrument store with this name already exists"),
+                wxMessageDialog err(this, _("Device or cartridge with this name already exists"),
                                     _("Could not rename"), wxOK | wxCENTRE | wxICON_ERROR);
                 err.ShowModal();
             }
@@ -183,7 +310,7 @@ void MainFrame::onInstRename(wxTreeEvent& event)
                 if (old != m_instrumentStores.end()) {
                     m_instrumentStores.erase(old);
                 }
-                m_instrumentStores.insert(std::pair<wxString, InstrumentStore*>(newLabel, store));
+                m_instrumentStores.insert(std::pair<wxString, InstStore>(newLabel, store));
             }
         }
     }
@@ -194,8 +321,7 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
 {
     // Check for MIDI device add
     if (event.GetItem() == m_devices) {
-        AddDeviceDialog dlg(this);
-        dlg.ShowModal();
+        addDevice();
         return;
     }
 
@@ -206,13 +332,13 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
         auto inst = dynamic_cast<InstrumentHelper*>(sel);
         auto store = inst->getStore();
         auto icbNum = inst->getIcb();
-        if (store != nullptr && icbNum != 0) {
-            Icb* icb = store->getIcb(icbNum);
+        if (store.m_store != nullptr && icbNum != 0) {
+            Icb* icb = store.m_store->getIcb(icbNum);
             if (icb != nullptr) {
-                m_instPanel->setInstrument(store, icbNum);
-                m_envelopePanel->setEnvelopes(store->getAmpl(icb->getAmplBlock()),
-                                              store->getFreq(icb->getFreqBlock()));
-                m_wavePanel->setWave(store->getWave(icb->getWaveBlock()));
+                m_instPanel->setInstrument(store.m_store, icbNum);
+                m_envelopePanel->setEnvelopes(store.m_store->getAmpl(icb->getAmplBlock()),
+                                              store.m_store->getFreq(icb->getFreqBlock()));
+                m_wavePanel->setWave(store.m_store->getWave(icb->getWaveBlock()));
             }
         }
     }
@@ -286,14 +412,20 @@ void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cart
                 throw DataFormatException("Unknown cartridge format");
             }
 
-            auto id = m_instTree->AppendItem(m_cartridges, cartName, -1, -1, new InstrumentHelper(store, 0));
+            InstStore is;
+            is.m_store = store;
+            is.m_inPort = 0;
+            is.m_outPort = 0;
+            is.m_channel = 0;
+            is.m_type = 0;
+            auto id = m_instTree->AppendItem(m_cartridges, cartName, -1, -1, new InstrumentHelper(is, 0));
             for (auto& i : *store) {
                 wxString instName(wxT("("));
                 instName << uint16_t(i.first) << wxT(") ");
                 instName << wxString::From8BitData(i.second.getName().c_str());
-                m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(store, i.first));
+                m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
             }
-            m_instrumentStores.insert(std::pair<wxString, InstrumentStore*>(cartName, store));
+            m_instrumentStores.insert(std::pair<wxString, InstStore>(cartName, is));
         }
         catch (...) {
             if (store != nullptr) {
@@ -307,6 +439,54 @@ void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cart
     }
     else {
         throw SystemException("Unable to open file");
+    }
+}
+
+// Add MIDI device
+void MainFrame::addDevice()
+{
+    // Check if we have MIDI
+    if (m_midiOutPorts.size() == 0 || m_midiInPorts.size() == 0) {
+        wxMessageDialog err(this, _("There are no MIDI ports available to add a new device"),
+                            _("Can not add new device"), wxOK | wxCENTRE | wxICON_ERROR);
+        err.ShowModal();
+        return;
+    }
+
+    // Show device add dialog
+    AddDeviceDialog dlg(this);
+    if (dlg.ShowModal() == wxID_OK) {
+        // Get data from device dialog
+        try {
+            const wxString& name = dlg.getName();
+            auto ent = m_instrumentStores.find(name);
+            if (ent != m_instrumentStores.end()) {
+                throw ConfigurationException("Device or cartridge with this name already exists");
+            }
+            InstStore is;
+            is.m_store = nullptr;
+            is.m_inPort = dlg.getInPort();
+            is.m_outPort = dlg.getOutPort();
+            is.m_channel = dlg.getChannel();
+            is.m_type = dlg.getType();
+            /*auto id = */m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+            m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
+            m_config.SetPath(wxT("/Devices"));
+            m_config.SetPath(name);
+#ifdef HAVE_RTMIDI
+            m_config.Write(wxT("InPort"), wxString::FromUTF8(m_midiIn->getPortName(is.m_inPort).c_str()));
+            m_config.Write(wxT("OutPort"), wxString::FromUTF8(m_midiOut->getPortName(is.m_outPort).c_str()));
+            m_config.Write(wxT("Channel"), long(is.m_channel));
+            m_config.Write(wxT("Type"), long(is.m_type));
+#endif // HAVE_RTMIDI
+            m_config.Flush();
+        }
+        catch (ConfigurationException& e) {
+            wxString msg(_("Could not add device: "));
+            msg << wxString::FromUTF8(e.what());
+            wxMessageDialog err(this, msg, _("Could not add device"), wxOK | wxCENTRE | wxICON_ERROR);
+            err.ShowModal();
+        }
     }
 }
 
