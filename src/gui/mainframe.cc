@@ -44,6 +44,7 @@
 #include <wersi/mk1cartridge.hh>
 #include <wersi/dx10cartridge.hh>
 #include <wersi/icb.hh>
+#include <wersi/sysex.hh>
 
 #include <wx/filedlg.h>
 #include <wx/file.h>
@@ -57,6 +58,11 @@
 #define RtMidiError RtError
 #endif // RtMidiError
 #endif // HAVE_RTMIDI
+
+#include <iostream>
+#include <iomanip>
+using namespace std;
+#include <unistd.h>
 
 using namespace DMSToolbox::Wersi;
 
@@ -341,6 +347,9 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
                 m_wavePanel->setWave(store.m_store->getWave(icb->getWaveBlock()));
             }
         }
+        else if (store.m_store == nullptr && icbNum == 0) {
+            //readDevice(store);
+        }
     }
 }
 
@@ -480,6 +489,8 @@ void MainFrame::addDevice()
             m_config.Write(wxT("Type"), long(is.m_type));
 #endif // HAVE_RTMIDI
             m_config.Flush();
+
+            //readDevice(is);
         }
         catch (ConfigurationException& e) {
             wxString msg(_("Could not add device: "));
@@ -488,6 +499,69 @@ void MainFrame::addDevice()
             err.ShowModal();
         }
     }
+}
+
+// Read MIDI device
+void MainFrame::readDevice(const InstStore& store)
+{
+#ifdef HAVE_RTMIDI
+    m_midiIn->openPort(store.m_inPort);
+    m_midiIn->ignoreTypes(false, true, true);
+    m_midiOut->openPort(store.m_outPort);
+    auto buf = new unsigned char[1024];
+    auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
+
+    SysEx::Message msg;
+    msg.m_type = SysEx::BlockType::RequestBlock;
+    msg.m_address = 0x41;
+    msg.m_length = 1;
+    msg.m_data[0] = static_cast<uint8_t>(SysEx::BlockType::FixWaveBlock);
+    std::vector<unsigned char> midi;
+
+    midi.clear();
+    size_t len = SysEx::toSysEx(store.m_type, msg, *sem);
+    for (size_t i = 0; i < len; ++i) {
+        midi.push_back(buf[i]);
+    }
+    cout << hex << setfill('0');
+    for (auto& i : midi) {
+        cout << " " << setw(2) << uint16_t(i);
+    }
+    cout << setfill(' ') << dec << endl;
+
+    if (!midi.empty()) {
+        m_midiOut->sendMessage(&midi);
+
+        bool done = false;
+        while (true) {
+            midi.clear();
+            m_midiIn->getMessage(&midi);
+            if (midi.empty()) {
+                if (!done) {
+                    sleep(10);
+                }
+                m_midiIn->getMessage(&midi);
+                if (midi.empty()) {
+                    break;
+                }
+            }
+            cout << midi.size() << endl;
+            cout << hex << setfill('0');
+            for (auto& i : midi) {
+                cout << " " << setw(2) << uint16_t(i);
+            }
+            cout << setfill(' ') << dec << endl;
+            if (midi[0] == 0xf0 || midi[0] == 0xc0) {
+                done = true;
+            }
+        }
+        cout << "Done" << endl;
+    }
+
+    delete[] buf;
+    m_midiOut->closePort();
+    m_midiIn->closePort();
+#endif // HAVE_RTMIDI
 }
 
 } // namespace Gui
