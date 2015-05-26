@@ -70,6 +70,11 @@ class Dx10Device : public InstrumentStore {
          */
         virtual ~Dx10Device();
 
+#ifdef HAVE_RTMIDI
+        /// Implements InstrumentStore::readFromDevice()
+        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort);
+#endif // HAVE_RTMIDI
+
         /// Implements InstrumentStore::dissect()
         virtual void dissect();
 

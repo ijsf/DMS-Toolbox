@@ -82,6 +82,9 @@ add_executable(dmsdump dmsdump.cc
     $<TARGET_OBJECTS:core>
     $<TARGET_OBJECTS:wersi>
 )
+if(RTMIDI_FOUND)
+    target_link_libraries(dmsdump ${RTMIDI_LIBRARY})
+endif(RTMIDI_FOUND)
 install(TARGETS dmsdump
     RUNTIME DESTINATION bin
 )

@@ -40,6 +40,12 @@
 #include <common.hh>
 #include <map>
 
+#ifdef HAVE_RTMIDI
+// Forward declarations
+class RtMidiIn;
+class RtMidiOut;
+#endif // HAVE_RTMIDI
+
 namespace DMSToolbox {
 namespace Wersi {
 
@@ -108,6 +114,18 @@ class InstrumentStore {
           @param[in]    source      Source instrument store to copy data from
          */
         void copyContents(const InstrumentStore& source);
+
+#ifdef HAVE_RTMIDI
+        /**
+          Read instrument store contents from device.
+
+          Reads the instrument store contents from the device using MIDI.
+
+          @param[in]    inPort      MIDI input port
+          @param[in]    outPort     MIDI output port
+         */
+        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort);
+#endif // HAVE_RTMIDI
 
         /**
           Dissect instrument store raw data buffer.

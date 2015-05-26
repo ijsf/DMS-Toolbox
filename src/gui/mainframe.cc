@@ -57,11 +57,6 @@
 #include <RtMidi.h>
 #endif // HAVE_RTMIDI
 
-#include <iostream>
-#include <iomanip>
-using namespace std;
-#include <unistd.h>
-
 using namespace DMSToolbox::Wersi;
 
 namespace DMSToolbox {
@@ -129,7 +124,7 @@ void MainFrame::applyConfiguration()
             is.m_midiIn = nullptr;
             is.m_midiOut = nullptr;
             try {
-                string pname("DMS-Toolbox:");
+                std::string pname("DMS-Toolbox:");
                 pname.append(name.fn_str());
                 is.m_midiIn = new RtMidiIn;
                 is.m_midiOut = new RtMidiOut;
@@ -318,7 +313,8 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
     }
 
     //auto prevSel = m_instTree->GetItemData(event.GetOldItem());
-    auto sel = m_instTree->GetItemData(event.GetItem());
+    auto item = event.GetItem();
+    auto sel = m_instTree->GetItemData(item);
 
     if (sel != nullptr) {
         auto inst = dynamic_cast<InstrumentHelper*>(sel);
@@ -334,7 +330,15 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
             }
         }
         else if (store.m_store != nullptr && icbNum == 0 && store.m_type != 0) {
-            readDevice(store);
+            store.m_store->readFromDevice(store.m_midiIn, store.m_midiOut);
+            m_instTree->DeleteChildren(item);
+            for (auto& i : *(store.m_store)) {
+                wxString instName(wxT("("));
+                instName << uint16_t(i.first) << wxT(") ");
+                instName << wxString::From8BitData(i.second.getName().c_str());
+                m_instTree->AppendItem(item, instName, -1, -1, new InstrumentHelper(store, i.first));
+            }
+            //writeDevice();
         }
     }
 }
@@ -602,56 +606,6 @@ void MainFrame::addDevice()
 
 // Read MIDI device
 #ifdef HAVE_RTMIDI
-void MainFrame::readDevice(const InstStore& store)
-{
-    auto buf = new unsigned char[1024];
-    auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
-
-    SysEx::Message msg;
-    msg.m_type = SysEx::BlockType::RequestBlock;
-    msg.m_address = 0x41;
-    msg.m_length = 1;
-    msg.m_data[0] = static_cast<uint8_t>(SysEx::BlockType::FixWaveBlock);
-    std::vector<unsigned char> midi;
-
-    midi.clear();
-    size_t len = SysEx::toSysEx(store.m_type, msg, *sem);
-    for (size_t i = 0; i < len; ++i) {
-        midi.push_back(buf[i]);
-    }
-    cout << hex << setfill('0');
-    for (auto& i : midi) {
-        cout << " " << setw(2) << uint16_t(i);
-    }
-    cout << setfill(' ') << dec << endl;
-
-    if (!midi.empty()) {
-        store.m_midiOut->sendMessage(&midi);
-
-        size_t retry = 0;
-        while (retry < 5) {
-            midi.clear();
-            store.m_midiIn->getMessage(&midi);
-            if (midi.empty()) {
-                usleep(100000);
-            }
-            else {
-                cout << midi.size() << endl;
-                cout << hex << setfill('0');
-                for (auto& i : midi) {
-                    cout << " " << setw(2) << uint16_t(i);
-                }
-                cout << setfill(' ') << dec << endl;
-                retry = 0;
-            }
-            ++retry;
-        }
-        cout << "Done" << endl;
-    }
-
-    delete[] buf;
-}
-
 // Write MIDI device
 void MainFrame::writeDevice(const InstStore& store)
 {

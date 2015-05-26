@@ -239,15 +239,6 @@ class MainFrame : public MainFrameBase {
         void addDevice();
 
         /**
-          Read device contents.
-
-          Reads all instrument data from a device using the given instrument store wrapper.
-
-          @param[in]    store       Instrument store with all necessary device data
-         */
-        void readDevice(const InstStore& store);
-
-        /**
           Write device contents.
 
           Writes all instrument data to a device using the given instrument store wrapper.

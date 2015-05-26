@@ -40,8 +40,14 @@
 #include <wersi/vcf.hh>
 #include <wersi/envelope.hh>
 #include <wersi/wave.hh>
+#include <wersi/sysex.hh>
 #include <exceptions.hh>
 #include <cstring>
+#include <unistd.h>
+
+#ifdef HAVE_RTMIDI
+#include <RtMidi.h>
+#endif // HAVE_RTMIDI
 
 namespace DMSToolbox {
 namespace Wersi {
@@ -79,6 +85,113 @@ Dx10Device::~Dx10Device()
 {
 }
 
+#ifdef HAVE_RTMIDI
+void readDevice(RtMidiIn* inPort, RtMidiOut* outPort,
+                SysEx::BlockType type, uint8_t address, uint8_t* ptr, uint8_t length)
+{
+    // Generate request message
+    SysEx::Message msg;
+    msg.m_type = SysEx::BlockType::RequestBlock;
+    msg.m_address = address;
+    msg.m_length = 1;
+    msg.m_data[0] = static_cast<uint8_t>(type);
+
+    // Send request message
+    std::vector<unsigned char> midi;
+    midi.clear();
+    auto buf = new unsigned char[1024];
+    auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
+    try {
+        size_t len = SysEx::toSysEx(2, msg, *sem);
+        for (size_t i = 0; i < len; ++i) {
+            midi.push_back(buf[i]);
+        }
+        outPort->sendMessage(&midi);
+
+        // Try to receive response
+        size_t retry = 0;
+        bool done = false;
+        while (retry < 20) {
+            midi.clear();
+            inPort->getMessage(&midi);
+            if (midi.empty()) {
+                usleep(100000);
+            }
+            else {
+                if (midi[0] == 0xf0 && midi.size() < 1024) {
+                    uint8_t* p = buf;
+                    for (auto& i : midi) {
+                        *p = i;
+                        ++p;
+                    }
+                    auto out = reinterpret_cast<SysEx::Message*>(buf);
+                    SysEx::fromSysEx(2, *sem, *out);
+                    if (out->m_type == type && out->m_length == length) {
+                        memcpy(ptr, out->m_data, length);
+                        done = true;
+                        break;
+                    }
+                }
+                retry = 0;
+            }
+            ++retry;
+        }
+        if (!done) {
+            throw MidiException("Did not receive expected data from device");
+        }
+    }
+    catch (...) {
+        delete[] buf;
+        throw;
+    }
+    delete[] buf;
+}
+
+// Read instrument store contents from device
+void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
+{
+    uint8_t* ptr = m_buffer;
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 66;
+        if (i >= 10) {
+            ++addr;
+        }
+        readDevice(inPort, outPort, SysEx::BlockType::IcBlock, addr, ptr, 16);
+        ptr += 16;
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        uint8_t addr = i + 65;
+        readDevice(inPort, outPort, SysEx::BlockType::VcfBlock, addr, ptr, 10);
+        ptr += 10;
+    }
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        readDevice(inPort, outPort, SysEx::BlockType::AmplBlock, addr, ptr, 44);
+        ptr += 44;
+    }
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        readDevice(inPort, outPort, SysEx::BlockType::FreqBlock, addr, ptr, 32);
+        ptr += 32;
+    }
+    for (size_t i = 0; i < 20; ++i) {
+        uint8_t addr = i + 65;
+        if (i >= 10) {
+            ++addr;
+        }
+        readDevice(inPort, outPort, SysEx::BlockType::FixWaveBlock, addr, ptr, 212);
+        ptr += 212;
+    }
+    dissect();
+}
+
+#endif // HAVE_RTMIDI
 // Dissect raw DX10/DX5 cartridge data
 void Dx10Device::dissect()
 {

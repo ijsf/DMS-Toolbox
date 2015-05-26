@@ -40,6 +40,11 @@
 #include <wersi/vcf.hh>
 #include <wersi/envelope.hh>
 #include <wersi/wave.hh>
+#include <exceptions.hh>
+
+#ifdef HAVE_RTMIDI
+#include <RtMidi.h>
+#endif // HAVE_RTMIDI
 
 namespace DMSToolbox {
 namespace Wersi {
@@ -129,6 +134,14 @@ void InstrumentStore::copyContents(const InstrumentStore& source)
         }
     }
 }
+
+#ifdef HAVE_RTMIDI
+// Read instrument store contents from device
+void InstrumentStore::readFromDevice(RtMidiIn* /*inPort*/, RtMidiOut* /*outPort*/)
+{
+    throw MidiException("Cannot read contents for this instrument store from device");
+}
+#endif // HAVE_RTMIDI
 
 // Return begin iterator to ICB map
 std::map<uint8_t, Icb>::iterator InstrumentStore::begin()

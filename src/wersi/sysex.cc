@@ -86,7 +86,7 @@ size_t SysEx::toSysEx(uint8_t device, const Message& message, SysExMessage& sysE
 // Convert SysEx message to raw message data
 void SysEx::fromSysEx(uint8_t device, const SysExMessage& sysEx, Message& message)
 {
-    if (sysEx.m_start != 0xf0 || sysEx.m_vendor != 0x25 || sysEx.m_device != device) {
+    if (sysEx.m_start != 0xf0 || (sysEx.m_vendor != 0x25 && sysEx.m_vendor != 0x3b) || sysEx.m_device != device) {
         throw MidiException("Invalid Wersi SysEx message");
     }
     message.m_type = static_cast<BlockType>(byteFromSysEx(3, sysEx.m_typeLo, sysEx.m_typeHi));
