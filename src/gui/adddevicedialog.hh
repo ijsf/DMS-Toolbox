@@ -38,6 +38,7 @@
 #pragma once
 
 #include <gui/gui.hh>
+#include <map>
 
 namespace DMSToolbox {
 namespace Gui {
@@ -61,8 +62,11 @@ class AddDeviceDialog : public AddDeviceDialogBase {
           device.
 
           @param[in]    parent      Main frame this dialog belongs to. Used as wxWindow and for MIDI port information
+          @param[in]    inPorts     MIDI in ports
+          @param[in]    outPorts    MIDI out ports
          */
-        AddDeviceDialog(MainFrame* parent);
+        AddDeviceDialog(MainFrame* parent, const std::map<unsigned int, wxString>& inPorts,
+                        const std::map<unsigned int, wxString>& outPorts);
 
         /**
           Get device name.

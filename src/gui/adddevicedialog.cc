@@ -59,7 +59,8 @@ class PortHelper : public wxClientData {
 };
 
 // Create add device dialog
-AddDeviceDialog::AddDeviceDialog(MainFrame* parent)
+AddDeviceDialog::AddDeviceDialog(MainFrame* parent, const std::map<unsigned int, wxString>& inPorts,
+                                 const std::map<unsigned int, wxString>& outPorts)
     : AddDeviceDialogBase(parent)
 {
     // Preset a name
@@ -67,12 +68,12 @@ AddDeviceDialog::AddDeviceDialog(MainFrame* parent)
 
     // Fill MIDI port choices
     m_inPortChoice->Clear();
-    for (auto& i : parent->getMidiInPorts()) {
+    for (auto& i : inPorts) {
         m_inPortChoice->Append(i.second, new PortHelper(i.first));
     }
     m_inPortChoice->SetSelection(0);
     m_outPortChoice->Clear();
-    for (auto& i : parent->getMidiOutPorts()) {
+    for (auto& i : outPorts) {
         m_outPortChoice->Append(i.second, new PortHelper(i.first));
     }
     m_outPortChoice->SetSelection(0);

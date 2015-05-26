@@ -95,28 +95,6 @@ class MainFrame : public MainFrameBase {
          */
         void applyConfiguration();
 
-        /**
-          Return map of MIDI input ports.
-
-          Returns the map of MIDI input ports, used to show it for selection in the device dialog.
-
-          @return                   Const ref to the map of MIDI input ports
-         */
-        const std::map<unsigned int, wxString> getMidiInPorts() const {
-            return m_midiInPorts;
-        }
-
-        /**
-          Return map of MIDI output ports.
-
-          Returns the map of MIDI output ports, used to show it for selection in the device dialog.
-
-          @return                   Const ref to the map of MIDI output ports
-         */
-        const std::map<unsigned int, wxString> getMidiOutPorts() const {
-            return m_midiOutPorts;
-        }
-
     protected:
         /**
           Instrument deletion event handler.
@@ -194,8 +172,10 @@ class MainFrame : public MainFrameBase {
         /// Instrument store wrapper struct to hold MIDI information for physical devices
         struct InstStore {
             Wersi::InstrumentStore* m_store;    ///< Instrument store
-            unsigned int            m_inPort;   ///< MIDI input port
-            unsigned int            m_outPort;  ///< MIDI output port
+#ifdef HAVE_RTMIDI
+            RtMidiIn*               m_midiIn;   ///< MIDI input object
+            RtMidiOut*              m_midiOut;  ///< MIDI output object
+#endif // HAVE_RTMIDI
             uint8_t                 m_channel;  ///< MIDI channel
             uint8_t                 m_type;     ///< Device type, 0 for cartridge
         };
@@ -239,17 +219,6 @@ class MainFrame : public MainFrameBase {
 
         /// Source storage on drag&drop copy action
         Wersi::InstrumentStore* m_dragStore;
-
-#ifdef HAVE_RTMIDI
-        RtMidiIn*       m_midiIn;           ///< MIDI input object
-        RtMidiOut*      m_midiOut;          ///< MIDI output object
-#endif // HAVE_RTMIDI
-
-        /// List of MIDI input ports
-        std::map<unsigned int, wxString>    m_midiInPorts;
-
-        /// List of MIDI output ports
-        std::map<unsigned int, wxString>    m_midiOutPorts;
 
         /**
           Read cartridge file and create instrument store from it.
