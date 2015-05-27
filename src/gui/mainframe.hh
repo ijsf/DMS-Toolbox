@@ -253,6 +253,19 @@ class MainFrame : public MainFrameBase {
           @param[in]    store       Instrument store with all necessary device data
          */
         void writeDevice(const InstStore& store);
+
+        /**
+          Update a progress dialog.
+
+          Used as callback to update a progress dialog.
+
+          @param[in]    object      Object to update, wxProgressDialog instance usually
+          @param[in]    current     Current progress value
+          @param[in]    max         Maximum value of progress
+
+          @return                   If true, caller should abort activity
+         */
+        static bool updateProgress(void* object, uint32_t current, uint32_t max);
 };
 
 } // namespace Gui

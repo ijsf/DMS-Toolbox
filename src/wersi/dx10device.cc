@@ -55,6 +55,10 @@ namespace Wersi {
 // Create new DX10/EX10R device object
 Dx10Device::Dx10Device(void* buffer, size_t size)
     : InstrumentStore(buffer, size)
+    , m_awaitType(0)
+    , m_awaitAddress(0)
+    , m_awaitLength(0)
+    , m_awaitDestination(nullptr)
 {
     // Initialize ICBs
     memset(buffer, 0, size);
@@ -86,8 +90,7 @@ Dx10Device::~Dx10Device()
 }
 
 #ifdef HAVE_RTMIDI
-void readDevice(RtMidiIn* inPort, RtMidiOut* outPort,
-                SysEx::BlockType type, uint8_t address, uint8_t* ptr, uint8_t length)
+void Dx10Device::readBlock(RtMidiOut* outPort, SysEx::BlockType type, uint8_t address, uint8_t* ptr, uint8_t length)
 {
     // Generate request message
     SysEx::Message msg;
@@ -95,60 +98,76 @@ void readDevice(RtMidiIn* inPort, RtMidiOut* outPort,
     msg.m_address = address;
     msg.m_length = 1;
     msg.m_data[0] = static_cast<uint8_t>(type);
+    unsigned char buf[sizeof(SysEx::SysExMessage) + 2];
+    auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
+    size_t len = SysEx::toSysEx(2, msg, *sem);
+
+    // Set awaiting information
+    m_awaitType = msg.m_data[0];
+    m_awaitAddress = address;
+    m_awaitLength = length;
+    m_awaitDestination = ptr;
 
     // Send request message
     std::vector<unsigned char> midi;
-    midi.clear();
-    auto buf = new unsigned char[1024];
-    auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
-    try {
-        size_t len = SysEx::toSysEx(2, msg, *sem);
-        for (size_t i = 0; i < len; ++i) {
-            midi.push_back(buf[i]);
-        }
-        outPort->sendMessage(&midi);
+    for (size_t i = 0; i < len; ++i) {
+        midi.push_back(buf[i]);
+    }
+    outPort->sendMessage(&midi);
 
-        // Try to receive response
-        size_t retry = 0;
-        bool done = false;
-        while (retry < 20) {
-            midi.clear();
-            inPort->getMessage(&midi);
-            if (midi.empty()) {
-                usleep(100000);
-            }
-            else {
-                if (midi[0] == 0xf0 && midi.size() < 1024) {
-                    uint8_t* p = buf;
-                    for (auto& i : midi) {
-                        *p = i;
-                        ++p;
-                    }
-                    auto out = reinterpret_cast<SysEx::Message*>(buf);
-                    SysEx::fromSysEx(2, *sem, *out);
-                    if (out->m_type == type && out->m_length == length) {
-                        memcpy(ptr, out->m_data, length);
-                        done = true;
-                        break;
-                    }
-                }
-                retry = 0;
-            }
-            ++retry;
-        }
-        if (!done) {
-            throw MidiException("Did not receive expected data from device");
+    // Wait for response
+    size_t retry = 0;
+    while (retry < 200) {
+        usleep(10000);
+        if (m_awaitDestination == nullptr) {
+            break;
         }
     }
-    catch (...) {
-        delete[] buf;
-        throw;
+    if (m_awaitDestination != nullptr) {
+        m_awaitDestination = nullptr;
+        throw MidiException("Did not receive expected data from device");
     }
-    delete[] buf;
+}
+
+// SysEx message callback
+void Dx10Device::receivedSysEx(std::vector<unsigned char>* message)
+{
+    // Check if we are awaiting a message
+    if (m_awaitDestination == nullptr) {
+        return;
+    }
+
+    // If message is not too large, take it apart
+    if (message->size() <= 512) {
+        auto buf = new unsigned char[512];
+        uint8_t* p = buf;
+        for (auto& i : *message) {
+            *p = i;
+            ++p;
+        }
+        try {
+            auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
+            auto out = reinterpret_cast<SysEx::Message*>(buf);
+            SysEx::fromSysEx(2, *sem, *out);
+
+            // If this is what we expect, use it
+            if (static_cast<uint8_t>(out->m_type) == m_awaitType &&
+                    out->m_address == m_awaitAddress && out->m_length == m_awaitLength) {
+                memcpy(m_awaitDestination, out->m_data, m_awaitLength);
+                m_awaitDestination = nullptr;
+            }
+            delete[] buf;
+        }
+        catch (...) {
+            delete[] buf;
+            throw;
+        }
+    }
 }
 
 // Read instrument store contents from device
-void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
+void Dx10Device::readFromDevice(RtMidiIn* /*inPort*/, RtMidiOut* outPort,
+                                bool(*callback)(void* object, uint32_t current, uint32_t max), void* object)
 {
     uint8_t* ptr = m_buffer;
     for (size_t i = 0; i < 20; ++i) {
@@ -156,12 +175,18 @@ void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
         if (i >= 10) {
             ++addr;
         }
-        readDevice(inPort, outPort, SysEx::BlockType::IcBlock, addr, ptr, 16);
+        if (callback != nullptr) {
+            callback(object, ptr - m_buffer, m_size);
+        }
+        readBlock(outPort, SysEx::BlockType::IcBlock, addr, ptr, 16);
         ptr += 16;
     }
     for (size_t i = 0; i < 10; ++i) {
         uint8_t addr = i + 65;
-        readDevice(inPort, outPort, SysEx::BlockType::VcfBlock, addr, ptr, 10);
+        if (callback != nullptr) {
+            callback(object, ptr - m_buffer, m_size);
+        }
+        readBlock(outPort, SysEx::BlockType::VcfBlock, addr, ptr, 10);
         ptr += 10;
     }
     for (size_t i = 0; i < 20; ++i) {
@@ -169,7 +194,10 @@ void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
         if (i >= 10) {
             ++addr;
         }
-        readDevice(inPort, outPort, SysEx::BlockType::AmplBlock, addr, ptr, 44);
+        if (callback != nullptr) {
+            callback(object, ptr - m_buffer, m_size);
+        }
+        readBlock(outPort, SysEx::BlockType::AmplBlock, addr, ptr, 44);
         ptr += 44;
     }
     for (size_t i = 0; i < 20; ++i) {
@@ -177,7 +205,10 @@ void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
         if (i >= 10) {
             ++addr;
         }
-        readDevice(inPort, outPort, SysEx::BlockType::FreqBlock, addr, ptr, 32);
+        if (callback != nullptr) {
+            callback(object, ptr - m_buffer, m_size);
+        }
+        readBlock(outPort, SysEx::BlockType::FreqBlock, addr, ptr, 32);
         ptr += 32;
     }
     for (size_t i = 0; i < 20; ++i) {
@@ -185,13 +216,16 @@ void Dx10Device::readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort)
         if (i >= 10) {
             ++addr;
         }
-        readDevice(inPort, outPort, SysEx::BlockType::FixWaveBlock, addr, ptr, 212);
+        if (callback != nullptr) {
+            callback(object, ptr - m_buffer, m_size);
+        }
+        readBlock(outPort, SysEx::BlockType::FixWaveBlock, addr, ptr, 212);
         ptr += 212;
     }
     dissect();
 }
-
 #endif // HAVE_RTMIDI
+
 // Dissect raw DX10/DX5 cartridge data
 void Dx10Device::dissect()
 {

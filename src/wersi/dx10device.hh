@@ -38,6 +38,7 @@
 #pragma once
 
 #include <wersi/instrumentstore.hh>
+#include <wersi/sysex.hh>
 
 namespace DMSToolbox {
 namespace Wersi {
@@ -72,7 +73,11 @@ class Dx10Device : public InstrumentStore {
 
 #ifdef HAVE_RTMIDI
         /// Implements InstrumentStore::readFromDevice()
-        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort);
+        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort,
+                                    bool(*callback)(void* object, uint32_t current, uint32_t max), void* object);
+
+        /// Implements InstrumentStore::receivedSysEx()
+        virtual void receivedSysEx(std::vector<unsigned char>* message);
 #endif // HAVE_RTMIDI
 
         /// Implements InstrumentStore::dissect()
@@ -87,6 +92,26 @@ class Dx10Device : public InstrumentStore {
         }
 
     private:
+        uint8_t     m_awaitType;                    ///< Awaiting SysEx message block type
+        uint8_t     m_awaitAddress;                 ///< Awaiting SysEx message block address
+        uint8_t     m_awaitLength;                  ///< Awaiting SysEx message block length
+        uint8_t*    m_awaitDestination;             ///< Awaiting SysEx message destination buffer
+
+#ifdef HAVE_RTMIDI
+        /**
+          Read data block from device.
+
+          Reads the requested data block from the device. Request message is generated here, the response is received
+          via callback. If no response is received within a given timeout, an exception is thrown.
+
+          @param[in]    outPort     MIDI output port to send request to
+          @param[in]    type        Block type
+          @param[in]    address     Block address
+          @param[in]    length      Block length
+         */
+        void readBlock(RtMidiOut* outPort, SysEx::BlockType type, uint8_t address, uint8_t* ptr, uint8_t length);
+#endif // HAVE_RTMIDI
+
         Dx10Device(const Dx10Device&);              ///< Inhibit copying objects
         Dx10Device& operator=(const Dx10Device&);   ///< Inhibit copying objects
 };

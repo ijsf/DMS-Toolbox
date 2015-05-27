@@ -52,6 +52,7 @@
 #include <wx/filename.h>
 #include <wx/wfstream.h>
 #include <wx/msgdlg.h>
+#include <wx/progdlg.h>
 
 #ifdef HAVE_RTMIDI
 #include <RtMidi.h>
@@ -248,7 +249,9 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
         }
         else if (store.m_store != nullptr && icbNum == 0 && store.m_type != 0) {
             // TODO temporary - read device
-            store.m_store->readFromDevice(store.m_midiIn, store.m_midiOut);
+            wxProgressDialog prog(_("Read from device"), _("Reading instruments from device..."), 6180, this,
+                                  wxPD_APP_MODAL | wxPD_AUTO_HIDE | wxPD_CAN_ABORT | wxPD_ELAPSED_TIME | wxPD_REMAINING_TIME);
+            store.m_store->readFromDevice(store.m_midiIn, store.m_midiOut, updateProgress, &prog);
             m_instTree->DeleteChildren(item);
             for (auto& i : *(store.m_store)) {
                 wxString instName(wxT("("));
@@ -414,6 +417,7 @@ void MainFrame::createDevices()
                 m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
             }
             m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
+            is.m_midiIn->setCallback(SysEx::rtMidiCallback, is.m_store);
         }
         catch (Exception& e) {
             if (is.m_store != nullptr) {
@@ -526,11 +530,11 @@ void MainFrame::addDevice()
         midiOut = new RtMidiOut();
     }
     catch (RtMidiError&) {
-        if(midiIn != nullptr) {
+        if (midiIn != nullptr) {
             delete midiIn;
             midiIn = nullptr;
         }
-        if(midiOut != nullptr) {
+        if (midiOut != nullptr) {
             delete midiOut;
             midiOut = nullptr;
         }
@@ -626,6 +630,7 @@ void MainFrame::addDevice()
             m_config.Write(wxT("Channel"), long(is.m_channel));
             m_config.Write(wxT("Type"), long(is.m_type));
             m_config.Flush();
+            is.m_midiIn->setCallback(SysEx::rtMidiCallback, is.m_store);
         }
         catch (ConfigurationException& e) {
             if (is.m_store != nullptr) {
@@ -727,6 +732,17 @@ void MainFrame::writeDevice(const InstStore& /*store*/)
 {
 }
 #endif // HAVE_RTMIDI
+
+// Update progress dialog
+bool MainFrame::updateProgress(void* object, uint32_t current, uint32_t /*max*/)
+{
+    auto progDlg = reinterpret_cast<wxProgressDialog*>(object);
+    if (progDlg != nullptr) {
+        //progDlg->SetRange(max);
+        return progDlg->Update(current);
+    }
+    return false;
+}
 
 } // namespace Gui
 } // namespace DMSToolbox

@@ -184,6 +184,18 @@ class SysEx {
           @param[in]        ampl        WAVE to send to device
          */
         static void sendWave(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Wave& wave);
+
+        /**
+          RtMidi callback.
+
+          This is the RtMidi receive callback to keep the input queue tidy. It throws away all message that are
+          not Wersi SysEx and routes the remaining messages to the instrument store pointed to by the userData pointer.
+
+          @param[in]        timeStamp   MIDI timestamp, ignored
+          @param[in]        message     MIDI message just received
+          @param[in]        userData    InstrumentStore pointer to route Wersi SysEx messages to
+         */
+        static void rtMidiCallback(double timestamp, std::vector<unsigned char>* message, void* userData);
 #endif // HAVE_RTMIDI
 };
 

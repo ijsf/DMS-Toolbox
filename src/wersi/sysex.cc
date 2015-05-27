@@ -40,6 +40,7 @@
 #include <wersi/vcf.hh>
 #include <wersi/envelope.hh>
 #include <wersi/wave.hh>
+#include <wersi/instrumentstore.hh>
 #include <exceptions.hh>
 #include <cstring>
 
@@ -223,6 +224,16 @@ void SysEx::sendWave(RtMidiOut* midi, uint8_t type, uint8_t blockNum, const Wave
         data.push_back(out[i]);
     }
     midi->sendMessage(&data);
+}
+
+// MIDI receive callback
+void SysEx::rtMidiCallback(double /*timestamp*/, std::vector<unsigned char>* message, void* userData)
+{
+    if (userData != nullptr && message->size() >= 8 &&
+            message->at(0) == 0xf0 && (message->at(1) == 0x25 || message->at(1) == 0x3b)) {
+        auto is = static_cast<InstrumentStore*>(userData);
+        is->receivedSysEx(message);
+    }
 }
 #endif // HAVE_RTMIDI
 

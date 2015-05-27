@@ -137,9 +137,16 @@ void InstrumentStore::copyContents(const InstrumentStore& source)
 
 #ifdef HAVE_RTMIDI
 // Read instrument store contents from device
-void InstrumentStore::readFromDevice(RtMidiIn* /*inPort*/, RtMidiOut* /*outPort*/)
+void InstrumentStore::readFromDevice(RtMidiIn* /*inPort*/, RtMidiOut* /*outPort*/,
+                                     bool(* /*callback*/)(void*, uint32_t, uint32_t), void* /*object*/)
 {
     throw MidiException("Cannot read contents for this instrument store from device");
+}
+
+// SysEx receive callback
+void InstrumentStore::receivedSysEx(std::vector<unsigned char>* /*message*/)
+{
+    throw MidiException("Cannot handle SysEx message in this instrument store");
 }
 #endif // HAVE_RTMIDI
 

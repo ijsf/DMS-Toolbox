@@ -39,6 +39,7 @@
 
 #include <common.hh>
 #include <map>
+#include <vector>
 
 #ifdef HAVE_RTMIDI
 // Forward declarations
@@ -123,8 +124,20 @@ class InstrumentStore {
 
           @param[in]    inPort      MIDI input port
           @param[in]    outPort     MIDI output port
+          @param[in]    callback    Callback for progress display
+          qparam[in]    object      Object to pass to progress display callback
          */
-        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort);
+        virtual void readFromDevice(RtMidiIn* inPort, RtMidiOut* outPort,
+                                    bool(*callback)(void* object, uint32_t current, uint32_t max), void* object);
+
+        /**
+          SysEx receive callback.
+
+          If a Wersi SysEx message has been received for this instrument store, this callback is called with it.
+
+          @param[in]    message     Wersi SysEx message
+         */
+        virtual void receivedSysEx(std::vector<unsigned char>* message);
 #endif // HAVE_RTMIDI
 
         /**
