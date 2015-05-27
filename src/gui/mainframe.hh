@@ -221,6 +221,13 @@ class MainFrame : public MainFrameBase {
         Wersi::InstrumentStore* m_dragStore;
 
         /**
+          Create devices from configuration.
+
+          Reads the configuration and creates all configured devices if possible.
+         */
+        void createDevices();
+
+        /**
           Read cartridge file and create instrument store from it.
 
           Reads a cartridge file and creates an instrument store from it. The instrument store is automatically

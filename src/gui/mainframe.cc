@@ -88,19 +88,27 @@ MainFrame::MainFrame(wxWindow* parent)
 MainFrame::~MainFrame()
 {
     for (auto& i : m_instrumentStores) {
+        // Delete store and associated buffer
         if (i.second.m_store != nullptr) {
             auto buffer = static_cast<uint8_t*>(i.second.m_store->getBuffer());
-            delete[] buffer;
             delete i.second.m_store;
+            delete[] buffer;
         }
+
 #ifdef HAVE_RTMIDI
-        if (i.second.m_midiIn != nullptr) {
-            i.second.m_midiIn->closePort();
-            delete i.second.m_midiIn;
-        }
-        if (i.second.m_midiOut != nullptr) {
-            i.second.m_midiOut->closePort();
-            delete i.second.m_midiOut;
+        // Check the following only for MIDI stores
+        if (i.second.m_type != 0) {
+            // Delete MIDI input
+            if (i.second.m_midiIn != nullptr) {
+                i.second.m_midiIn->closePort();
+                delete i.second.m_midiIn;
+            }
+
+            // Delete MIDI output
+            if (i.second.m_midiOut != nullptr) {
+                i.second.m_midiOut->closePort();
+                delete i.second.m_midiOut;
+            }
         }
 #endif // HAVE_RTMIDI
     }
@@ -109,99 +117,8 @@ MainFrame::~MainFrame()
 // Apply configuration
 void MainFrame::applyConfiguration()
 {
-#ifdef HAVE_RTMIDI
-    // Read configured devices
-    {
-        m_config.SetPath(wxT("/Devices"));
-        wxString name;
-        long index;
-        bool cont = m_config.GetFirstGroup(name, index);
-        while (cont)
-        {
-            m_config.SetPath(name);
-            InstStore is;
-            is.m_store = nullptr;
-            is.m_midiIn = nullptr;
-            is.m_midiOut = nullptr;
-            try {
-                std::string pname("DMS-Toolbox:");
-                pname.append(name.fn_str());
-                is.m_midiIn = new RtMidiIn;
-                is.m_midiOut = new RtMidiOut;
-                wxString inPortName = m_config.Read(wxT("InPort"));
-                bool found = false;
-                unsigned int numPorts = is.m_midiIn->getPortCount();
-                for (unsigned int idx = 0; idx < numPorts; ++idx) {
-                    wxString name(wxString::FromUTF8(is.m_midiIn->getPortName(idx).c_str()));
-                    if (name == inPortName) {
-                        is.m_midiIn->openPort(idx, pname);
-                        is.m_midiIn->ignoreTypes(false, true, true);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw ConfigurationException("MIDI input port not found");
-                }
-
-                wxString outPortName = m_config.Read(wxT("OutPort"));
-                found = false;
-                numPorts = is.m_midiOut->getPortCount();
-                for (unsigned int idx = 0; idx < numPorts; ++idx) {
-                    wxString name(wxString::FromUTF8(is.m_midiOut->getPortName(idx).c_str()));
-                    if (name == outPortName) {
-                        is.m_midiOut->openPort(idx, pname);
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found) {
-                    throw ConfigurationException("MIDI output port not found");
-                }
-
-                long tmp = 0;
-                if (!m_config.Read(wxT("Channel"), &tmp) || tmp < 1 || tmp > 16) {
-                    throw ConfigurationException("Invalid value for MIDI channel");
-                }
-                is.m_channel = uint8_t(tmp);
-                if (!m_config.Read(wxT("Type"), &tmp) || tmp < 1 || tmp > 2) {
-                    throw ConfigurationException("Invalid value for device type");
-                }
-                is.m_type = uint8_t(tmp);
-
-                // Create instrument store
-                is.m_store = new Dx10Device(new uint8_t[6180], 6180);
-
-                auto id = m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
-                for (auto& i : *(is.m_store)) {
-                    wxString instName(wxT("("));
-                    instName << uint16_t(i.first) << wxT(") ");
-                    instName << wxString::From8BitData(i.second.getName().c_str());
-                    m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
-                }
-                m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
-            }
-            catch (Exception& e) {
-                if (is.m_midiOut != nullptr) {
-                    delete is.m_midiOut;
-                    is.m_midiOut = nullptr;
-                }
-                if (is.m_midiIn != nullptr) {
-                    delete is.m_midiIn;
-                    is.m_midiIn = nullptr;
-                }
-                wxString msg(_("Device '"));
-                msg << name << _("' could not be created, reason: ");
-                msg << wxString::FromUTF8(e.what());
-                wxMessageDialog err(this, msg, _("Could not creatre device"),
-                                    wxOK | wxCENTRE | wxICON_ERROR);
-                err.ShowModal();
-            }
-            m_config.SetPath(wxT(".."));
-            cont = m_config.GetNextGroup(name, index);
-        }
-    }
-#endif // HAVE_RTMIDI
+    // Create configured devices
+    createDevices();
 
     // Read cartridges opened last time
     m_config.SetPath(wxT("/Cartridges"));
@@ -330,6 +247,7 @@ void MainFrame::onInstSelect(wxTreeEvent& event)
             }
         }
         else if (store.m_store != nullptr && icbNum == 0 && store.m_type != 0) {
+            // TODO temporary - read device
             store.m_store->readFromDevice(store.m_midiIn, store.m_midiOut);
             m_instTree->DeleteChildren(item);
             for (auto& i : *(store.m_store)) {
@@ -418,6 +336,113 @@ void MainFrame::onEditRename(wxCommandEvent& /*event*/)
 {
 }
 
+// Create devices from configuration
+void MainFrame::createDevices()
+{
+#ifdef HAVE_RTMIDI
+    // Read configured devices
+    m_config.SetPath(wxT("/Devices"));
+    wxString name;
+    long index;
+    bool cont = m_config.GetFirstGroup(name, index);
+    while (cont) {
+        m_config.SetPath(name);
+        InstStore is;
+        is.m_store = nullptr;
+        is.m_midiIn = nullptr;
+        is.m_midiOut = nullptr;
+        try {
+            // Build name for MIDI ports
+            std::string pname("DMS-Toolbox:");
+            pname.append(name.fn_str());
+
+            // Create MIDI objects
+            is.m_midiIn = new RtMidiIn;
+            is.m_midiOut = new RtMidiOut;
+
+            // Look up and open input port
+            wxString inPortName = m_config.Read(wxT("InPort"));
+            bool found = false;
+            unsigned int numPorts = is.m_midiIn->getPortCount();
+            for (unsigned int idx = 0; idx < numPorts; ++idx) {
+                wxString name(wxString::FromUTF8(is.m_midiIn->getPortName(idx).c_str()));
+                if (name == inPortName) {
+                    is.m_midiIn->openPort(idx, pname);
+                    is.m_midiIn->ignoreTypes(false, true, true);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw ConfigurationException("MIDI input port not found");
+            }
+
+            // Look up and open output port
+            wxString outPortName = m_config.Read(wxT("OutPort"));
+            found = false;
+            numPorts = is.m_midiOut->getPortCount();
+            for (unsigned int idx = 0; idx < numPorts; ++idx) {
+                wxString name(wxString::FromUTF8(is.m_midiOut->getPortName(idx).c_str()));
+                if (name == outPortName) {
+                    is.m_midiOut->openPort(idx, pname);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw ConfigurationException("MIDI output port not found");
+            }
+
+            // Get channel and device type
+            long tmp = 0;
+            if (!m_config.Read(wxT("Channel"), &tmp) || tmp < 1 || tmp > 16) {
+                throw ConfigurationException("Invalid value for MIDI channel");
+            }
+            is.m_channel = uint8_t(tmp);
+            if (!m_config.Read(wxT("Type"), &tmp) || tmp < 1 || tmp > 2) {
+                throw ConfigurationException("Invalid value for device type");
+            }
+            is.m_type = uint8_t(tmp);
+
+            // Create instrument store
+            is.m_store = new Dx10Device(new uint8_t[6180], 6180);
+            auto id = m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
+            for (auto& i : *(is.m_store)) {
+                wxString instName(wxT("("));
+                instName << uint16_t(i.first) << wxT(") ");
+                instName << wxString::From8BitData(i.second.getName().c_str());
+                m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
+            }
+            m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
+        }
+        catch (Exception& e) {
+            if (is.m_store != nullptr) {
+                auto buffer = static_cast<uint8_t*>(is.m_store->getBuffer());
+                delete is.m_store;
+                is.m_store = nullptr;
+                delete[] buffer;
+            }
+            if (is.m_midiOut != nullptr) {
+                delete is.m_midiOut;
+                is.m_midiOut = nullptr;
+            }
+            if (is.m_midiIn != nullptr) {
+                delete is.m_midiIn;
+                is.m_midiIn = nullptr;
+            }
+            wxString msg(_("Device '"));
+            msg << name << _("' could not be created, reason: ");
+            msg << wxString::FromUTF8(e.what());
+            wxMessageDialog err(this, msg, _("Could not create device"),
+                                wxOK | wxCENTRE | wxICON_ERROR);
+            err.ShowModal();
+        }
+        m_config.SetPath(wxT(".."));
+        cont = m_config.GetNextGroup(name, index);
+    }
+#endif // HAVE_RTMIDI
+}
+
 // Read cartridge file and create instrument store from it.
 void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cartName)
 {
@@ -461,6 +486,8 @@ void MainFrame::readCartridgeFile(const wxString& filePath, const wxString& cart
 
             InstStore is;
             is.m_store = store;
+            is.m_midiIn = nullptr;
+            is.m_midiOut = nullptr;
             is.m_channel = 0;
             is.m_type = 0;
             auto id = m_instTree->AppendItem(m_cartridges, cartName, -1, -1, new InstrumentHelper(is, 0));
@@ -492,26 +519,27 @@ void MainFrame::addDevice()
 {
 #ifdef HAVE_RTMIDI
     // Initialize MIDI
-    bool midiOk = true;
     RtMidiIn* midiIn(nullptr);
     RtMidiOut* midiOut(nullptr);
     try {
         midiIn = new RtMidiIn();
-    }
-    catch (RtMidiError&) {
-        midiOk = false;
-    }
-    try {
         midiOut = new RtMidiOut();
     }
     catch (RtMidiError&) {
-        midiOk = false;
+        if(midiIn != nullptr) {
+            delete midiIn;
+            midiIn = nullptr;
+        }
+        if(midiOut != nullptr) {
+            delete midiOut;
+            midiOut = nullptr;
+        }
     }
 
     // If okay, get all MIDI ports
     std::map<unsigned int, wxString> midiInPorts;
     std::map<unsigned int, wxString> midiOutPorts;
-    if (midiOk) {
+    if (midiIn != nullptr && midiOut != nullptr) {
         midiInPorts.clear();
         unsigned int numPorts = midiIn->getPortCount();
         for (unsigned int idx = 0; idx < numPorts; ++idx) {
@@ -529,6 +557,7 @@ void MainFrame::addDevice()
         wxMessageDialog err(this, _("The MIDI subsystem reported an error, so MIDI is not available"),
                             _("Could not initialize MIDI"), wxOK | wxCENTRE | wxICON_ERROR);
         err.ShowModal();
+        return;
     }
 
     // Check if we have MIDI
@@ -536,6 +565,14 @@ void MainFrame::addDevice()
         wxMessageDialog err(this, _("There are no MIDI ports available to add a new device"),
                             _("Can not add new device"), wxOK | wxCENTRE | wxICON_ERROR);
         err.ShowModal();
+        if (midiOut != nullptr) {
+            delete midiOut;
+            midiOut = nullptr;
+        }
+        if (midiIn != nullptr) {
+            delete midiIn;
+            midiIn = nullptr;
+        }
         return;
     }
 
@@ -543,6 +580,10 @@ void MainFrame::addDevice()
     AddDeviceDialog dlg(this, midiInPorts, midiOutPorts);
     if (dlg.ShowModal() == wxID_OK) {
         // Get data from device dialog
+        InstStore is;
+        is.m_store = nullptr;
+        is.m_midiIn = nullptr;
+        is.m_midiOut = nullptr;
         try {
             const wxString& name = dlg.getName();
             std::string pname("DMS-Toolbox:");
@@ -551,16 +592,19 @@ void MainFrame::addDevice()
             if (ent != m_instrumentStores.end()) {
                 throw ConfigurationException("Device or cartridge with this name already exists");
             }
-            InstStore is;
-            is.m_store = nullptr;
+
+            // This moves pointer ownership to InstStore object
             is.m_midiIn = midiIn;
             midiIn = nullptr;
             unsigned int inPort = dlg.getInPort();
             is.m_midiIn->openPort(inPort, pname);
+            is.m_midiIn->ignoreTypes(false, true, true);
+
             is.m_midiOut = midiOut;
             midiOut = nullptr;
             unsigned int outPort = dlg.getOutPort();
             is.m_midiOut->openPort(outPort, pname);
+
             is.m_channel = dlg.getChannel();
             is.m_type = dlg.getType();
 
@@ -577,15 +621,25 @@ void MainFrame::addDevice()
             m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
             m_config.SetPath(wxT("/Devices"));
             m_config.SetPath(name);
-            m_config.Write(wxT("InPort"), wxString::FromUTF8(midiIn->getPortName(inPort).c_str()));
-            m_config.Write(wxT("OutPort"), wxString::FromUTF8(midiOut->getPortName(outPort).c_str()));
+            m_config.Write(wxT("InPort"), wxString::FromUTF8(is.m_midiIn->getPortName(inPort).c_str()));
+            m_config.Write(wxT("OutPort"), wxString::FromUTF8(is.m_midiOut->getPortName(outPort).c_str()));
             m_config.Write(wxT("Channel"), long(is.m_channel));
             m_config.Write(wxT("Type"), long(is.m_type));
             m_config.Flush();
-
-            //readDevice(is);
         }
         catch (ConfigurationException& e) {
+            if (is.m_store != nullptr) {
+                auto buffer = static_cast<uint8_t*>(is.m_store->getBuffer());
+                delete is.m_store;
+                is.m_store = nullptr;
+                delete[] buffer;
+            }
+            if (is.m_midiIn != nullptr) {
+                delete is.m_midiIn;
+            }
+            if (is.m_midiOut != nullptr) {
+                delete is.m_midiOut;
+            }
             wxString msg(_("Could not add device: "));
             msg << wxString::FromUTF8(e.what());
             wxMessageDialog err(this, msg, _("Could not add device"), wxOK | wxCENTRE | wxICON_ERROR);
@@ -593,6 +647,7 @@ void MainFrame::addDevice()
         }
     }
 
+    // If pointer ownership wasn't moved, something went wrong, delete original objects
     if (midiOut != nullptr) {
         delete midiOut;
         midiOut = nullptr;
