@@ -100,27 +100,36 @@ void Dx10Device::readBlock(RtMidiOut* outPort, SysEx::BlockType type, uint8_t ad
     msg.m_data[0] = static_cast<uint8_t>(type);
     unsigned char buf[sizeof(SysEx::SysExMessage) + 2];
     auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
-    size_t len = SysEx::toSysEx(2, msg, *sem);
+    size_t len = SysEx::toSysEx(1, msg, *sem);
 
     // Set awaiting information
     m_awaitType = msg.m_data[0];
     m_awaitAddress = address;
     m_awaitLength = length;
     m_awaitDestination = ptr;
+    
+    printf("INFO: Awaiting message, (type %u, addr %u, len %u)\n",
+        (uint8_t)m_awaitType,
+        m_awaitAddress,
+        m_awaitLength
+    );
 
     // Send request message
     std::vector<unsigned char> midi;
     for (size_t i = 0; i < len; ++i) {
         midi.push_back(buf[i]);
     }
-    outPort->sendMessage(&midi);
 
     // Wait for response
     size_t retry = 0;
     while (retry < 200) {
-        usleep(10000);
+        usleep(50000);
         if (m_awaitDestination == nullptr) {
             break;
+        } else {
+            // Resend
+            printf("WARNING: Resending\n");
+            outPort->sendMessage(&midi);
         }
     }
     if (m_awaitDestination != nullptr) {
@@ -148,13 +157,23 @@ void Dx10Device::receivedSysEx(std::vector<unsigned char>* message)
         try {
             auto sem = reinterpret_cast<SysEx::SysExMessage*>(buf);
             auto out = reinterpret_cast<SysEx::Message*>(buf);
-            SysEx::fromSysEx(2, *sem, *out);
+            SysEx::fromSysEx(1, *sem, *out);
 
             // If this is what we expect, use it
             if (static_cast<uint8_t>(out->m_type) == m_awaitType &&
                     out->m_address == m_awaitAddress && out->m_length == m_awaitLength) {
+                printf("INFO: Got message\n");
                 memcpy(m_awaitDestination, out->m_data, m_awaitLength);
                 m_awaitDestination = nullptr;
+            } else {
+                printf("WARNING: Invalid message, got (type %u, addr %u, len %u) expected (type %u, addr %u, len %u)\n",
+                  (uint8_t)out->m_type,
+                  out->m_address,
+                  out->m_length,
+                  (uint8_t)m_awaitType,
+                  m_awaitAddress,
+                  m_awaitLength
+                );
             }
             delete[] buf;
         }
