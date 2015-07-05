@@ -363,6 +363,9 @@ void MainFrame::createDevices()
             is.m_midiIn = new RtMidiIn;
             is.m_midiOut = new RtMidiOut;
 
+            is.m_store = new Dx10Device(new uint8_t[6180], 6180);
+            is.m_midiIn->setCallback(SysEx::rtMidiCallback, is.m_store);
+
             // Look up and open input port
             wxString inPortName = m_config.Read(wxT("InPort"));
             bool found = false;
@@ -408,7 +411,6 @@ void MainFrame::createDevices()
             is.m_type = uint8_t(tmp);
 
             // Create instrument store
-            is.m_store = new Dx10Device(new uint8_t[6180], 6180);
             auto id = m_instTree->AppendItem(m_devices, name, -1, -1, new InstrumentHelper(is, 0));
             for (auto& i : *(is.m_store)) {
                 wxString instName(wxT("("));
@@ -417,7 +419,6 @@ void MainFrame::createDevices()
                 m_instTree->AppendItem(id, instName, -1, -1, new InstrumentHelper(is, i.first));
             }
             m_instrumentStores.insert(std::pair<wxString, InstStore>(name, is));
-            is.m_midiIn->setCallback(SysEx::rtMidiCallback, is.m_store);
         }
         catch (Exception& e) {
             if (is.m_store != nullptr) {
